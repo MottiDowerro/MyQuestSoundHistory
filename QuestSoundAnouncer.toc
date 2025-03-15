@@ -2,5 +2,6 @@
 ## Title: QuestSoundAnouncer
 ## Author: MottiDowerro
 ## Notes: Anounce sounds when questing
+## Version: 1.0
 
 QuestSoundAnouncer.lua
