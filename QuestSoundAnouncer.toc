@@ -1,0 +1,6 @@
+## Interface: 30300
+## Title: QuestSoundAnouncer
+## Author: MottiDowerro
+## Notes: Anounce sounds when questing
+
+QuestSoundAnouncer.lua
