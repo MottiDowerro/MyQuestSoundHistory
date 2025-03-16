@@ -1,7 +1,10 @@
 ## Interface: 30300
 ## Title: QuestSoundAnouncer
 ## Author: MottiDowerro
-## Notes: Anounce sounds when questing
-## Version: 1.0
+## Notes: Anounce sounds when questing /QSA
+## Version: 1.1
 
-QuestSoundAnouncer.lua
+## SavedVariables: QuestSoundAnouncerDB
+
+Settings.lua
+Core.lua
