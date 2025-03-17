@@ -1,13 +1,15 @@
 local addonName = "QuestSoundAnouncer"
 local f = CreateFrame("Frame")
-
-local questCache = {}
+local completedQuests = {}
+local questCache = {} -- Вернули кэш задач
 local checkForUpdate
 
 f:RegisterEvent("ADDON_LOADED")
 f:RegisterEvent("QUEST_WATCH_UPDATE")
 f:RegisterEvent("QUEST_LOG_UPDATE")
-f:SetScript("OnEvent", function(self, event, arg1)
+f:RegisterEvent("QUEST_ACCEPTED")
+
+f:SetScript("OnEvent", function(self, event, arg1, arg2)
     if event == "ADDON_LOADED" and arg1 == addonName then
         CreateSettingsPanel()
         
@@ -16,48 +18,56 @@ f:SetScript("OnEvent", function(self, event, arg1)
             InterfaceOptionsFrame_OpenToCategory(addonName)
         end
         
+    elseif event == "QUEST_ACCEPTED" then
+        completedQuests[arg1] = nil
+        questCache[arg1] = nil -- Очищаем и кэш задач
+        
     elseif event == "QUEST_WATCH_UPDATE" then
         checkForUpdate = arg1
+        
     elseif event == "QUEST_LOG_UPDATE" and checkForUpdate then
         local questId = checkForUpdate
-        local numObjectives = GetNumQuestLeaderBoards(questId)
+        if completedQuests[questId] then return end
         
         questCache[questId] = questCache[questId] or { objectives = {} }
         local cache = questCache[questId]
         
+        local numObjectives = GetNumQuestLeaderBoards(questId)
         local allComplete = true
-        for i = 1, numObjectives do
-            local _, _, isCompleted = GetQuestLogLeaderBoard(i, questId)
-            allComplete = allComplete and isCompleted
-        end
-        
-        if allComplete and not cache.wasComplete then
-            if QuestSoundAnouncerDB.enableWorkComplete then
-                PlaySoundFile(QuestSoundAnouncerDB.workCompleteSound)
-            end
-            cache.wasComplete = true
-            return
-        end
-        
         local anyCompleted = false
+        
+        -- Основной цикл проверки задач
         for i = 1, numObjectives do
             local _, _, isCompleted = GetQuestLogLeaderBoard(i, questId)
-            local wasCompleted = cache.objectives[i] or false
             
+            -- Проверка полного завершения
+            allComplete = allComplete and isCompleted
+            
+            -- Проверка новых выполненных задач
+            local wasCompleted = cache.objectives[i] or false
             if isCompleted and not wasCompleted then
-                if QuestSoundAnouncerDB.enableSingleComplete then
-                    PlaySoundFile(QuestSoundAnouncerDB.singleCompleteSound)
-                end
                 anyCompleted = true
             end
             cache.objectives[i] = isCompleted
         end
         
-        if not anyCompleted and not allComplete and QuestSoundAnouncerDB.enableProgressSound then
-            PlaySoundFile(QuestSoundAnouncerDB.progressSound)
+        -- Приоритетная проверка полного завершения
+        if allComplete then
+            if QuestSoundAnouncerDB.enableWorkComplete then
+                PlaySoundFile(QuestSoundAnouncerDB.workCompleteSound)
+            end
+            completedQuests[questId] = true
+            checkForUpdate = nil
+            return
         end
         
-        cache.wasComplete = allComplete
+        -- Воспроизведение звуков по приоритету
+        if anyCompleted and QuestSoundAnouncerDB.enableSingleComplete then
+            PlaySoundFile(QuestSoundAnouncerDB.singleCompleteSound)
+        elseif not anyCompleted and QuestSoundAnouncerDB.enableProgressSound then
+            PlaySoundFile(QuestSoundAnouncerDB.progressSound) -- Старая логика прогресса
+        end
+        
         checkForUpdate = nil
     end
 end)

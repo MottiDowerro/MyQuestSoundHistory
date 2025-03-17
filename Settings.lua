@@ -110,17 +110,14 @@ function CreateSettingsPanel()
     contentFrame:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -40)
     contentFrame:SetSize(650, 350)
 
-    -- Work Complete
     local workCheck = CreateCheckbox(contentFrame, "Полное завершение", "enableWorkComplete", -20)
     local playWork = CreatePlayButton(contentFrame, workCheck, "workCompleteSound")
     CreateDropdown(contentFrame, "workCompleteSound", playWork, -15, 3)
 
-    -- Single Complete
     local singleCheck = CreateCheckbox(contentFrame, "Этап задания", "enableSingleComplete", -70)
     local playSingle = CreatePlayButton(contentFrame, singleCheck, "singleCompleteSound")
     CreateDropdown(contentFrame, "singleCompleteSound", playSingle, -15, 3)
 
-    -- Progress
     local progressCheck = CreateCheckbox(contentFrame, "Прогресс задания", "enableProgressSound", -120)
     local playProgress = CreatePlayButton(contentFrame, progressCheck, "progressSound")
     CreateDropdown(contentFrame, "progressSound", playProgress, -15, 3)
