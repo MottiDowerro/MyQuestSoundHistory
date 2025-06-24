@@ -36,7 +36,7 @@ local SOUND_LIST = {
     {value = "Sound\\Creature\\Peon\\PeonWhat4.wav"}
 }
 
-local function CreateCheckbox(parent, text, configKey, yOffset)
+local function CreateCheckbox(parent, text, configKey, point, relativeTo, relativePoint, xOffset, yOffset)
     local checkbox = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
     checkbox:SetSize(26, 26)
     checkbox.text:SetFontObject("GameFontHighlight")
@@ -46,6 +46,9 @@ local function CreateCheckbox(parent, text, configKey, yOffset)
     checkbox:SetScript("OnClick", function(self)
         MyQuestSoundHistoryDB[configKey] = self:GetChecked()
     end)
+    if point then
+        checkbox:SetPoint(point, relativeTo, relativePoint, xOffset, yOffset)
+    end
     return checkbox
 end
 
@@ -85,14 +88,16 @@ local function CreateDropdown(parent, configKey, anchorFrame, text, xOffset, yOf
     return dropdown
 end
 
-local function CreatePlayButton(parent, anchorFrame, configKey)
+local function CreatePlayButton(parent, anchorFrame, configKey, point, relativeTo, relativePoint, xOffset, yOffset)
     local button = CreateFrame("Button", nil, parent)
     button:SetSize(24, 24)
     button:SetNormalTexture("Interface\\Common\\VoiceChat-Speaker")
     button:SetScript("OnClick", function()
         PlaySoundFile(MyQuestSoundHistoryDB[configKey])
     end)
-    
+    if point then
+        button:SetPoint(point, relativeTo, relativePoint, xOffset, yOffset)
+    end
     return button
 end
 
@@ -106,8 +111,8 @@ local function CreateMainSettingsPanel()
     title:SetPoint("TOPLEFT", 20, -20)
     title:SetText(L_("ADDON_TITLE"))
 
-    local soundAnouncerCheck = CreateCheckbox(panel, L_("ENABLE_SOUND_ANOUNCER"), "enableSoundAnouncer", -50)
-    local historyCheck = CreateCheckbox(panel, L_("ENABLE_HISTORY"), "enableHistory", -70)
+    local soundAnouncerCheck = CreateCheckbox(panel, L_("ENABLE_SOUND_ANOUNCER"), "enableSoundAnouncer", "TOPLEFT", title, "BOTTOMLEFT", 0, -20)
+    local historyCheck = CreateCheckbox(panel, L_("ENABLE_HISTORY"), "enableHistory", "TOPLEFT", soundAnouncerCheck, "BOTTOMLEFT", 0, -10)
 
     InterfaceOptions_AddCategory(panel)
 end
@@ -146,23 +151,19 @@ local function CreateSoundAnouncerSettingsPanel()
     contentFrame:SetSize(650, 350)
 
     -- WORK COMPLETE
-    local workCheck = CreateCheckbox(contentFrame, L_("ENABLE_WORK_COMPLETE"), "enableWorkComplete", 10)
+    local workCheck = CreateCheckbox(contentFrame, L_("ENABLE_WORK_COMPLETE"), "enableWorkComplete", "TOPLEFT", contentFrame, "TOPLEFT", -15, -3)
     local workDropdown = CreateDropdown(contentFrame, "workCompleteSound", workCheck, L_("WORK_COMPLETE_SOUND"), -15, -3, "TOPLEFT", "BOTTOMLEFT")
-    local playWork = CreatePlayButton(contentFrame, workDropdown, "workCompleteSound")
-    playWork:SetPoint("LEFT", workDropdown, "RIGHT", -4, 2)
+    local playWork = CreatePlayButton(contentFrame, workDropdown, "workCompleteSound", "LEFT", workDropdown, "RIGHT", -4, 2)
 
     -- SINGLE COMPLETE
-    local singleCheck = CreateCheckbox(contentFrame, L_("ENABLE_SINGLE_COMPLETE"), "enableSingleComplete", -50)
+    local singleCheck = CreateCheckbox(contentFrame, L_("ENABLE_SINGLE_COMPLETE"), "enableSingleComplete", "TOPLEFT", workCheck, "BOTTOMLEFT", -15, -3)
     local singleDropdown = CreateDropdown(contentFrame, "singleCompleteSound", singleCheck, L_("SINGLE_COMPLETE_SOUND"), -15, -3, "TOPLEFT", "BOTTOMLEFT")
-    local playSingle = CreatePlayButton(contentFrame, singleDropdown, "singleCompleteSound")
-    playSingle:SetPoint("LEFT", singleDropdown, "RIGHT", -4, 2)
+    local playSingle = CreatePlayButton(contentFrame, singleDropdown, "singleCompleteSound", "LEFT", singleDropdown, "RIGHT", -4, 2)
 
     -- PROGRESS SOUND
-    local progressCheck = CreateCheckbox(contentFrame, L_("ENABLE_PROGRESS_SOUND"), "enableProgressSound", -110)
+    local progressCheck = CreateCheckbox(contentFrame, L_("ENABLE_PROGRESS_SOUND"), "enableProgressSound", "TOPLEFT", singleCheck, "BOTTOMLEFT", -15, -3)
     local progressDropdown = CreateDropdown(contentFrame, "progressSound", progressCheck, L_("PROGRESS_SOUND"), -15, -3, "TOPLEFT", "BOTTOMLEFT")
-    local playProgress = CreatePlayButton(contentFrame, progressDropdown, "progressSound")
-    playProgress:ClearAllPoints()
-    playProgress:SetPoint("LEFT", progressDropdown, "RIGHT", -4, 2)
+    local playProgress = CreatePlayButton(contentFrame, progressDropdown, "progressSound", "LEFT", progressDropdown, "RIGHT", -4, 2)
 
     InterfaceOptions_AddCategory(panel)
 end
