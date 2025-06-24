@@ -10,16 +10,15 @@ local function SoundAnouncer_OnLoad()
     
     f:SetScript("OnEvent", function(self, event, arg1, arg2)
         if event == "QUEST_ACCEPTED" then
-            questCache[arg1] = nil
+            if arg1 then
+                questCache[arg1] = nil
+            end
         elseif event == "QUEST_WATCH_UPDATE" then
-            checkForUpdate = arg1
+            if arg1 then
+                checkForUpdate = arg1
+            end
         elseif event == "QUEST_LOG_UPDATE" and checkForUpdate then
             local questId = checkForUpdate
-            
-            if not questId then 
-                checkForUpdate = nil 
-                return 
-            end
             
             questCache[questId] = questCache[questId] or { objectives = {} }
             local cache = questCache[questId]
@@ -38,8 +37,8 @@ local function SoundAnouncer_OnLoad()
                 local _, _, isCompleted = GetQuestLogLeaderBoard(i, questId)
                 
                 allComplete = isCompleted
-                local wasCompleted = cache.objectives[i] or false
-                if isCompleted and not wasCompleted then
+
+                if isCompleted then
                     anyCompleted = true
                 end
                 
@@ -54,9 +53,7 @@ local function SoundAnouncer_OnLoad()
                 checkForUpdate = nil
                 questCache[questId] = nil
                 return
-            end
-            
-            if anyCompleted and MyQuestSoundHistoryDB.enableSingleComplete then
+            elseif anyCompleted and MyQuestSoundHistoryDB.enableSingleComplete then
                 PlaySoundFile(MyQuestSoundHistoryDB.singleCompleteSound)
             elseif not anyCompleted and MyQuestSoundHistoryDB.enableProgressSound then
                 PlaySoundFile(MyQuestSoundHistoryDB.progressSound)
