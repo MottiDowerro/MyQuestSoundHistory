@@ -1,7 +1,7 @@
 local function SoundAnouncer_OnLoad()
     
     local questCache = {}
-    local checkForUpdate
+    local checkForUpdate = nil
     local f = CreateFrame("Frame")
 
     f:RegisterEvent("QUEST_ACCEPTED")
@@ -25,6 +25,11 @@ local function SoundAnouncer_OnLoad()
             local cache = questCache[questId]
             
             local numObjectives = GetNumQuestLeaderBoards(questId)
+
+            if numObjectives == 0 then 
+                checkForUpdate = nil 
+                return 
+            end
             
             local allComplete = false
             local anyCompleted = false
