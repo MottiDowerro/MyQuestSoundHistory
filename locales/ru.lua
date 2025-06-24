@@ -1,0 +1,18 @@
+local L = {}
+L["ADDON_TITLE"] = "MyQuestSoundHistory"
+L["WORK_COMPLETE"] = "Квест полностью завершён"
+L["SINGLE_COMPLETE"] = "Этап квеста завершён"
+L["PROGRESS"] = "Прогресс квеста"
+L["ENABLE_SOUND_ANOUNCER"] = "Включить анонсер квестов"
+L["ENABLE_HISTORY"] = "Включить историю квестов"
+L["README_TITLE"] = "MyQuestSoundHistory для WoW (3.3.5a)"
+L["README_DESC"] = "Аддон, при помощи которого можно настроить воспроизведение звуков при квестинге :>"
+L["ENABLE_WORK_COMPLETE"] = "Включить звук завершения квеста"
+L["ENABLE_SINGLE_COMPLETE"] = "Включить звук завершения этапа"
+L["ENABLE_PROGRESS_SOUND"] = "Включить звук прогресса квеста"
+L["WORK_COMPLETE_SOUND"] = "Звук завершения квеста"
+L["SINGLE_COMPLETE_SOUND"] = "Звук завершения этапа"
+L["PROGRESS_SOUND"] = "Звук прогресса квеста"
+L["PLAY_SOUND"] = "Прослушать звук"
+L["SELECT_SOUND"] = "Выбрать звук"
+return L 

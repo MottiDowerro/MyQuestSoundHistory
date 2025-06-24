@@ -1,7 +1,9 @@
-local addonName = "QuestSoundAnouncer"
+local addonName = "MyQuestSoundHistory"
 
-if not QuestSoundAnouncerDB then
-    QuestSoundAnouncerDB = {
+if not MyQuestSoundHistoryDB then
+    MyQuestSoundHistoryDB = {
+        enableSoundAnouncer = true,
+        enableHistory = true,
         enableWorkComplete = true,
         enableSingleComplete = true,
         enableProgressSound = true,
@@ -41,14 +43,14 @@ local function CreateCheckbox(parent, text, configKey, yOffset)
     checkbox.text:SetFontObject("GameFontHighlight")
     checkbox.text:SetText(text)
     checkbox.text:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
-    checkbox:SetChecked(QuestSoundAnouncerDB[configKey])
+    checkbox:SetChecked(MyQuestSoundHistoryDB[configKey])
     checkbox:SetScript("OnClick", function(self)
-        QuestSoundAnouncerDB[configKey] = self:GetChecked()
+        MyQuestSoundHistoryDB[configKey] = self:GetChecked()
     end)
     return checkbox
 end
 
-local function CreateDropdown(parent, configKey, anchorFrame, xOffset, yOffset)
+local function CreateDropdown(parent, configKey, anchorFrame, xOffset, yOffset, text)
     local dropdown = CreateFrame("Frame", addonName..configKey.."DropDown", parent, "UIDropDownMenuTemplate")
     dropdown:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", xOffset, yOffset)
     UIDropDownMenu_SetWidth(dropdown, 350)
@@ -61,14 +63,14 @@ local function CreateDropdown(parent, configKey, anchorFrame, xOffset, yOffset)
     dropdownText:SetFontObject("GameFontHighlightSmall")
 
     UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
-        local selectedValue = QuestSoundAnouncerDB[configKey]
+        local selectedValue = MyQuestSoundHistoryDB[configKey]
         
         for _, sound in ipairs(SOUND_LIST) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = sound.value
             info.value = sound.value
             info.func = function(self)
-                QuestSoundAnouncerDB[configKey] = self.value
+                MyQuestSoundHistoryDB[configKey] = self.value
                 UIDropDownMenu_SetSelectedValue(dropdown, self.value)
                 UIDropDownMenu_SetText(dropdown, self.value)
                 CloseDropDownMenus()
@@ -78,8 +80,8 @@ local function CreateDropdown(parent, configKey, anchorFrame, xOffset, yOffset)
         end
     end)
 
-    UIDropDownMenu_SetText(dropdown, QuestSoundAnouncerDB[configKey] or "")
-    UIDropDownMenu_SetSelectedValue(dropdown, QuestSoundAnouncerDB[configKey])
+    UIDropDownMenu_SetText(dropdown, MyQuestSoundHistoryDB[configKey] or "")
+    UIDropDownMenu_SetSelectedValue(dropdown, MyQuestSoundHistoryDB[configKey])
 
     return dropdown
 end
@@ -91,7 +93,7 @@ local function CreatePlayButton(parent, anchorFrame, configKey)
     button:SetNormalTexture("Interface\\Common\\VoiceChat-Speaker")
     
     button:SetScript("OnClick", function()
-        PlaySoundFile(QuestSoundAnouncerDB[configKey], "Master")
+        PlaySoundFile(MyQuestSoundHistoryDB[configKey], "Master")
     end)
     
     return button
@@ -99,28 +101,31 @@ end
 
 function CreateSettingsPanel()
     local panel = CreateFrame("Frame")
-    panel.name = addonName
+    panel.name = L("ADDON_TITLE")
     panel:SetSize(700, 400)
     
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 20, -20)
-    title:SetText(addonName)
+    title:SetText(L("ADDON_TITLE"))
 
     local contentFrame = CreateFrame("Frame", nil, panel)
     contentFrame:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -40)
     contentFrame:SetSize(650, 350)
 
-    local workCheck = CreateCheckbox(contentFrame, "Полное завершение", "enableWorkComplete", -20)
+    local soundAnouncerCheck = CreateCheckbox(contentFrame, L("ENABLE_SOUND_ANOUNCER"), "enableSoundAnouncer", 10)
+    local historyCheck = CreateCheckbox(contentFrame, L("ENABLE_HISTORY"), "enableHistory", -30)
+
+    local workCheck = CreateCheckbox(contentFrame, L("ENABLE_WORK_COMPLETE"), "enableWorkComplete", -70)
     local playWork = CreatePlayButton(contentFrame, workCheck, "workCompleteSound")
-    CreateDropdown(contentFrame, "workCompleteSound", playWork, -15, 3)
+    CreateDropdown(contentFrame, "workCompleteSound", playWork, -15, 3, L("WORK_COMPLETE_SOUND"))
 
-    local singleCheck = CreateCheckbox(contentFrame, "Этап задания", "enableSingleComplete", -70)
+    local singleCheck = CreateCheckbox(contentFrame, L("ENABLE_SINGLE_COMPLETE"), "enableSingleComplete", -120)
     local playSingle = CreatePlayButton(contentFrame, singleCheck, "singleCompleteSound")
-    CreateDropdown(contentFrame, "singleCompleteSound", playSingle, -15, 3)
+    CreateDropdown(contentFrame, "singleCompleteSound", playSingle, -15, 3, L("SINGLE_COMPLETE_SOUND"))
 
-    local progressCheck = CreateCheckbox(contentFrame, "Прогресс задания", "enableProgressSound", -120)
+    local progressCheck = CreateCheckbox(contentFrame, L("ENABLE_PROGRESS_SOUND"), "enableProgressSound", -170)
     local playProgress = CreatePlayButton(contentFrame, progressCheck, "progressSound")
-    CreateDropdown(contentFrame, "progressSound", playProgress, -15, 3)
+    CreateDropdown(contentFrame, "progressSound", playProgress, -15, 3, L("PROGRESS_SOUND"))
 
     InterfaceOptions_AddCategory(panel)
 end
