@@ -1,4 +1,4 @@
-local L = {}
+L = L or {}
 L["ADDON_TITLE"] = "MyQuestSoundHistory"
 L["WORK_COMPLETE"] = "Quest fully completed"
 L["SINGLE_COMPLETE"] = "Quest stage completed"
@@ -14,5 +14,4 @@ L["WORK_COMPLETE_SOUND"] = "Quest complete sound"
 L["SINGLE_COMPLETE_SOUND"] = "Quest stage complete sound"
 L["PROGRESS_SOUND"] = "Quest progress sound"
 L["PLAY_SOUND"] = "Play sound"
-L["SELECT_SOUND"] = "Select sound"
-return L 
+L["SELECT_SOUND"] = "Select sound" 

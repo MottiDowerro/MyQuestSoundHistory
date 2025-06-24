@@ -12,10 +12,10 @@ f:SetScript("OnEvent", function(self, event, arg1, arg2)
         end
         -- Подключение модулей
         if MyQuestSoundHistoryDB.enableSoundAnouncer then
-            if SoundAnouncer_OnLoad then SoundAnouncer_OnLoad() end
+            if _G.SoundAnouncer_OnLoad then _G.SoundAnouncer_OnLoad() end
         end
         if MyQuestSoundHistoryDB.enableHistory then
-            if History_OnLoad then History_OnLoad() end
+            if _G.History_OnLoad then _G.History_OnLoad() end
         end
     end
 end)
