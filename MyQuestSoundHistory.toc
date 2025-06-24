@@ -1,8 +1,8 @@
 ## Interface: 30300
 ## Title: MyQuestSoundHistory
 ## Author: MottiDowerro
-## Notes: Anounce sounds when questing /MQSH
-## Version: 1.1
+## Notes: Anounce sounds when questing and quest history /MQSH
+## Version: 1.2
 
 ## SavedVariables: MyQuestSoundHistoryDB
 
