@@ -67,9 +67,16 @@ local function AddQuestToDB(questID, questLogIndex)
         local numRewards = GetNumQuestLogRewards()
         if numRewards and numRewards > 0 then
             for i = 1, numRewards do
-                local itemName = select(1, GetQuestLogRewardInfo(i))
+                -- Получаем расширенную информацию о предмете (иконку, ссылку и т.д.)
+                local itemName, itemTexture, _, _, _, itemID = GetQuestLogRewardInfo(i)
+                local itemLink = (GetQuestLogRewardLink and GetQuestLogRewardLink(i)) or nil
                 if itemName then
-                    table.insert(rewards.items, itemName)
+                    table.insert(rewards.items, {
+                        name    = itemName,
+                        texture = itemTexture,
+                        link    = itemLink or itemName,
+                        itemID  = itemID,
+                    })
                 end
             end
         end
@@ -77,9 +84,15 @@ local function AddQuestToDB(questID, questLogIndex)
         local numChoices = GetNumQuestLogChoices()
         if numChoices and numChoices > 0 then
             for i = 1, numChoices do
-                local itemName = select(1, GetQuestLogChoiceInfo(i))
+                local itemName, itemTexture, _, _, _, itemID = GetQuestLogChoiceInfo(i)
+                local itemLink = (GetQuestLogChoiceLink and GetQuestLogChoiceLink(i)) or nil
                 if itemName then
-                    table.insert(rewards.choices, itemName)
+                    table.insert(rewards.choices, {
+                        name    = itemName,
+                        texture = itemTexture,
+                        link    = itemLink or itemName,
+                        itemID  = itemID,
+                    })
                 end
             end
         end
