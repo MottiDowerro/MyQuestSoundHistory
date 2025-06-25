@@ -6,7 +6,7 @@ local uiCreated = false
 -- Ссылки на ключевые элементы UI, понадобятся позже
 local overlay
 local leftScrollFrame, leftContent
-local rightScrollFrame, rightContent, detailsFS
+local rightScrollFrame, rightContent, detailsFS, detailsTitle
 
 ------------------------------------------------------------
 -- Утилиты --------------------------------------------------
@@ -49,12 +49,18 @@ local function ShowQuestDetails(questID)
     local grey  = "|cffAAAAAA"
     local reset = "|r"
 
+    -- Обновляем заголовок
+    if detailsTitle then
+        detailsTitle:SetText(gold .. q.title .. reset)
+        -- Перепривязываем описание чуть ниже заголовка и слева
+        detailsFS:ClearAllPoints()
+        detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -detailsTitle:GetStringHeight() - 5)
+    end
+
     local text = {}
-    -- Заголовок
-    table.insert(text, gold .. q.title .. reset .. "\n\n")
     -- Описание
     if q.description and q.description ~= "" then
-        table.insert(text, white .. q.description .. reset .. "\n\n")
+        table.insert(text, white .. q.description .. reset .. "\n")
     end
     -- Цели задания
     if q.objectives and #q.objectives > 0 then
@@ -86,8 +92,10 @@ local function ShowQuestDetails(questID)
 
     -- Объединяем всё в одну строку
     detailsFS:SetText(table.concat(text, ""))
+
     -- Обновляем высоту контейнера, чтобы скролл работал корректно
-    rightContent:SetHeight(detailsFS:GetStringHeight() + 20)
+    local totalHeight = detailsTitle:GetStringHeight() + detailsFS:GetStringHeight() + 25
+    rightContent:SetHeight(totalHeight)
     rightScrollFrame:SetVerticalScroll(0)
 end
 
@@ -235,8 +243,14 @@ local function TryCreateQuestListUI()
     rightContent:SetSize(rightScrollFrame:GetWidth(), 1)
     rightScrollFrame:SetScrollChild(rightContent)
 
+    -- Заголовок квеста (большой шрифт, по центру)
+    detailsTitle = CreateFS(rightContent, "GameFontNormalLarge")
+    detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
+    detailsTitle:SetJustifyH("LEFT")
+
+    -- Основной текст (позиция скорректируется в ShowQuestDetails)
     detailsFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
-    detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
+    detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -25)
 
     --------------------------------------------------------
     -- Поведение окна --------------------------------------
