@@ -15,7 +15,7 @@ f:SetScript("OnEvent", function(self, event, arg1, arg2)
             if _G.SoundAnouncer_OnLoad then _G.SoundAnouncer_OnLoad() end
         end
         if MyQuestSoundHistoryDB.enableHistory then
-            if _G.History_OnLoad then _G.History_OnLoad() end
+            if _G.QuestDataBaseController_OnLoad then _G.QuestDataBaseController_OnLoad() end
         end
     end
 end)
