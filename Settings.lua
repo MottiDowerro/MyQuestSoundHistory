@@ -1,7 +1,7 @@
 local addonName = "MyQuestSoundHistory"
 
-if not MyQuestSoundHistoryDB then
-    MyQuestSoundHistoryDB = {
+if not MQSH_Config then
+    MQSH_Config = {
         enableSoundAnouncer = true,
         enableHistory = true,
         enableWorkComplete = true,
@@ -43,9 +43,9 @@ local function CreateCheckbox(parent, text, configKey, point, relativeTo, relati
     checkbox.text:SetFontObject("GameFontHighlight")
     checkbox.text:SetText(text)
     checkbox.text:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
-    checkbox:SetChecked(MyQuestSoundHistoryDB[configKey])
+    checkbox:SetChecked(MQSH_Config[configKey])
     checkbox:SetScript("OnClick", function(self)
-        MyQuestSoundHistoryDB[configKey] = self:GetChecked()
+        MQSH_Config[configKey] = self:GetChecked()
     end)
     return checkbox
 end
@@ -63,14 +63,14 @@ local function CreateDropdown(parent, configKey, anchorFrame, text, xOffset, yOf
     dropdownText:SetFontObject("GameFontHighlightSmall")
 
     UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
-        local selectedValue = MyQuestSoundHistoryDB[configKey]
+        local selectedValue = MQSH_Config[configKey]
         
         for _, sound in ipairs(SOUND_LIST) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = sound.value
             info.value = sound.value
             info.func = function(self)
-                MyQuestSoundHistoryDB[configKey] = self.value
+                MQSH_Config[configKey] = self.value
                 UIDropDownMenu_SetSelectedValue(dropdown, self.value)
                 UIDropDownMenu_SetText(dropdown, self.value)
                 CloseDropDownMenus()
@@ -80,8 +80,8 @@ local function CreateDropdown(parent, configKey, anchorFrame, text, xOffset, yOf
         end
     end)
 
-    UIDropDownMenu_SetText(dropdown, MyQuestSoundHistoryDB[configKey] or "")
-    UIDropDownMenu_SetSelectedValue(dropdown, MyQuestSoundHistoryDB[configKey])
+    UIDropDownMenu_SetText(dropdown, MQSH_Config[configKey] or "")
+    UIDropDownMenu_SetSelectedValue(dropdown, MQSH_Config[configKey])
 
     return dropdown
 end
@@ -92,7 +92,7 @@ local function CreatePlayButton(parent, anchorFrame, configKey, point, relativeT
     button:SetPoint(point, relativeTo, relativePoint, xOffset, yOffset)
     button:SetNormalTexture("Interface\\Common\\VoiceChat-Speaker")
     button:SetScript("OnClick", function()
-        PlaySoundFile(MyQuestSoundHistoryDB[configKey])
+        PlaySoundFile(MQSH_Config[configKey])
     end)
     return button
 end

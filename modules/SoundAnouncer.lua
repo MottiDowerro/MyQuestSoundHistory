@@ -33,14 +33,14 @@ local function SoundAnouncer_OnLoad()
                     end
                 end
             
-                if allComplete and MyQuestSoundHistoryDB.enableWorkComplete then
-                    PlaySoundFile(MyQuestSoundHistoryDB.workCompleteSound)
+                if allComplete and MQSH_Config and MQSH_Config.enableWorkComplete then
+                    PlaySoundFile(MQSH_Config.workCompleteSound)
                     checkForUpdate = nil
                     return
-                elseif singleCompleted and MyQuestSoundHistoryDB.enableSingleComplete then
-                    PlaySoundFile(MyQuestSoundHistoryDB.singleCompleteSound)
-                elseif not singleCompleted and MyQuestSoundHistoryDB.enableProgressSound then
-                    PlaySoundFile(MyQuestSoundHistoryDB.progressSound)
+                elseif singleCompleted and MQSH_Config and MQSH_Config.enableSingleComplete then
+                    PlaySoundFile(MQSH_Config.singleCompleteSound)
+                elseif not singleCompleted and MQSH_Config and MQSH_Config.enableProgressSound then
+                    PlaySoundFile(MQSH_Config.progressSound)
                 end
 
             else

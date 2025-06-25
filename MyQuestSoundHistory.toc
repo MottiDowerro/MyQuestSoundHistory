@@ -4,7 +4,7 @@
 ## Notes: Anounce sounds when questing and quest history /MQSH
 ## Version: 1.2
 
-## SavedVariables: MyQuestSoundHistoryDB
+## SavedVariables: MQSH_Config MQSH_QuestDB
 
 Localization.lua
 Settings.lua

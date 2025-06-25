@@ -10,11 +10,12 @@ f:SetScript("OnEvent", function(self, event, arg1, arg2)
         SlashCmdList["MYQUESTSOUNDHISTORY"] = function()
             InterfaceOptionsFrame_OpenToCategory(addonName)
         end
-        -- Подключение модулей
-        if MyQuestSoundHistoryDB.enableSoundAnouncer then
+
+        -- Подключение модулей согласно новым настройкам
+        if MQSH_Config and MQSH_Config.enableSoundAnouncer then
             if _G.SoundAnouncer_OnLoad then _G.SoundAnouncer_OnLoad() end
         end
-        if MyQuestSoundHistoryDB.enableHistory then
+        if MQSH_Config and MQSH_Config.enableHistory then
             if _G.QuestDataBaseController_OnLoad then _G.QuestDataBaseController_OnLoad() end
         end
     end
