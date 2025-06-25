@@ -1,5 +1,5 @@
 ## Interface: 30300
-## Title: MyQuestSoundHistory
+## Title: |cffC78FEA|cffD19DE2|cffDBAAEAMy|r|cffC78FEAQ|r|cffB471F2u|r|cffA053F6e|r|cff8C35FAst|r|cff7817FFSound|r|cff6400FFHistory|r
 ## Author: MottiDowerro
 ## Notes: Anounce sounds when questing and quest history /MQSH
 ## Version: 1.2
