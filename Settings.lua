@@ -89,13 +89,11 @@ end
 local function CreatePlayButton(parent, anchorFrame, configKey, point, relativeTo, relativePoint, xOffset, yOffset)
     local button = CreateFrame("Button", nil, parent)
     button:SetSize(24, 24)
+    button:SetPoint(point, relativeTo, relativePoint, xOffset, yOffset)
     button:SetNormalTexture("Interface\\Common\\VoiceChat-Speaker")
     button:SetScript("OnClick", function()
         PlaySoundFile(MyQuestSoundHistoryDB[configKey])
     end)
-    if point then
-        button:SetPoint(point, relativeTo, relativePoint, xOffset, yOffset)
-    end
     return button
 end
 
