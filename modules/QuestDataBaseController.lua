@@ -95,15 +95,16 @@ end
 local function QuestDataBaseController_OnLoad()
     local frame = CreateFrame("Frame")
     frame:RegisterEvent("QUEST_ACCEPTED")
-
     frame:SetScript("OnEvent", function(self, event, ...)
         if event == "QUEST_ACCEPTED" then
             local questLogIndex, questIDFromEvent = ...
-            local questID = questIDFromEvent or GetQuestIDByLogIndex(questLogIndex)
 
-            if questID then
-                AddQuestToDB(questID, questLogIndex)
-            end
+            C_Timer:After(1, function()
+                local questID = questIDFromEvent or GetQuestIDByLogIndex(questLogIndex)
+                if questID then
+                    AddQuestToDB(questID, questLogIndex)
+                end
+            end)
         end
     end)
 end
