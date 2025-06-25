@@ -41,7 +41,7 @@ local function AddQuestToDB(questID, questLogIndex)
     end
 
     WithQuestLogSelection(questLogIndex, function()
-        local title = select(1, GetQuestLogTitle(questLogIndex)) or "Unknown"
+        local title, level = select(1, GetQuestLogTitle(questLogIndex)) or "Unknown", select(2, GetQuestLogTitle(questLogIndex)) or 0
         local description, objectivesText = GetQuestLogQuestText()
 
         -- Цели
@@ -99,15 +99,32 @@ local function AddQuestToDB(questID, questLogIndex)
 
         MQSH_QuestDB[questID] = {
             title       = title,
+            level       = level, -- Добавляем уровень квеста
             description = description,
             objectivesText = objectivesText,
             objectives  = objectives,
             rewards     = rewards,
-            addedAt     = time(),
         }
-
     end)
 end
+
+local function QuestDataBaseController_OnLoad()
+    local frame = CreateFrame("Frame")
+    frame:RegisterEvent("QUEST_ACCEPTED")
+
+    frame:SetScript("OnEvent", function(self, event, ...)
+        if event == "QUEST_ACCEPTED" then
+            local questLogIndex, questIDFromEvent = ...
+            local questID = questIDFromEvent or GetQuestIDByLogIndex(questLogIndex)
+
+            if questID then
+                AddQuestToDB(questID, questLogIndex)
+            end
+        end
+    end)
+end
+
+_G.QuestDataBaseController_OnLoad = QuestDataBaseController_OnLoad
 
 local function QuestDataBaseController_OnLoad()
     local frame = CreateFrame("Frame")

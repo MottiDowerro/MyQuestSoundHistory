@@ -5,7 +5,7 @@ local uiCreated = false
 local overlay
 local leftScrollFrame, leftContent
 local rightScrollFrame, rightContent, detailsFS, detailsTitle
-local selectedButton -- currently highlighted quest button
+local selectedButton
 local objectivesSummaryFS, objectivesTextFS
 local rewardsHeadingFS, rewardsTextFS
 local descHeadingFS
@@ -410,7 +410,7 @@ local function BuildQuestList()
         return a < b
     end)
 
-    local btnHeight = 20
+    local btnHeight = 16
     local width = leftScrollFrame:GetWidth() - 5
     local reset = "|r"
 
@@ -445,8 +445,10 @@ local function BuildQuestList()
         btn:SetPoint("TOPLEFT", leftContent, "TOPLEFT", 0, -(index - 1) * btnHeight)
         btn:SetPoint("TOPRIGHT", leftContent, "TOPRIGHT", 0, -(index - 1) * btnHeight)
 
-        -- Установка текста кнопки
-        btn.text:SetText((data.title or ("Quest " .. tostring(qID))) .. reset)
+        -- Установка текста кнопки с уровнем квеста
+        local title = data.title or ("Quest " .. tostring(qID))
+        local level = data.level or "?" -- Если уровень неизвестен, показываем "?"
+        btn.text:SetText(string.format("[%d] %s%s", level, title, reset))
 
         -- Обработчик клика
         btn:SetScript("OnClick", function(self)
