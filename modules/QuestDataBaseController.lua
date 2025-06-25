@@ -28,7 +28,7 @@ end
 
 local function AddQuestToDB(questID, questLogIndex)
     if MQSH_QuestDB[questID] then
-        --return
+        return
     end
 
     WithQuestLogSelection(questLogIndex, function()
