@@ -1,12 +1,3 @@
-local addonName = "MyQuestSoundHistory"
-
-
-if _G.MyQuestSoundHistory_QuestDB and not _G.MQSH_QuestDB then
-    _G.MQSH_QuestDB = _G.MyQuestSoundHistory_QuestDB
-    _G.MyQuestSoundHistory_QuestDB = nil
-end
-
-
 if not MQSH_QuestDB then
     MQSH_QuestDB = {}
 end
@@ -37,14 +28,13 @@ end
 
 local function AddQuestToDB(questID, questLogIndex)
     if MQSH_QuestDB[questID] then
-        return
+        --return
     end
 
     WithQuestLogSelection(questLogIndex, function()
         local title, level = select(1, GetQuestLogTitle(questLogIndex)) or "Unknown", select(2, GetQuestLogTitle(questLogIndex)) or 0
         local description, objectivesText = GetQuestLogQuestText()
 
-        -- Цели
         local objectives = {}
         local numObjectives = GetNumQuestLeaderBoards()
         if numObjectives and numObjectives > 0 then
@@ -63,18 +53,14 @@ local function AddQuestToDB(questID, questLogIndex)
             xp      = GetQuestLogRewardXP and (GetQuestLogRewardXP() or 0) or nil,
         }
 
-        -- Гарантированные предметы
         local numRewards = GetNumQuestLogRewards()
         if numRewards and numRewards > 0 then
             for i = 1, numRewards do
-                -- Получаем расширенную информацию о предмете (иконку, ссылку и т.д.)
                 local itemName, itemTexture, _, _, _, itemID = GetQuestLogRewardInfo(i)
-                local itemLink = (GetQuestLogRewardLink and GetQuestLogRewardLink(i)) or nil
                 if itemName then
                     table.insert(rewards.items, {
                         name    = itemName,
                         texture = itemTexture,
-                        link    = itemLink or itemName,
                         itemID  = itemID,
                     })
                 end
@@ -85,12 +71,10 @@ local function AddQuestToDB(questID, questLogIndex)
         if numChoices and numChoices > 0 then
             for i = 1, numChoices do
                 local itemName, itemTexture, _, _, _, itemID = GetQuestLogChoiceInfo(i)
-                local itemLink = (GetQuestLogChoiceLink and GetQuestLogChoiceLink(i)) or nil
                 if itemName then
                     table.insert(rewards.choices, {
                         name    = itemName,
                         texture = itemTexture,
-                        link    = itemLink or itemName,
                         itemID  = itemID,
                     })
                 end
@@ -99,7 +83,7 @@ local function AddQuestToDB(questID, questLogIndex)
 
         MQSH_QuestDB[questID] = {
             title       = title,
-            level       = level, -- Добавляем уровень квеста
+            level       = level,
             description = description,
             objectivesText = objectivesText,
             objectives  = objectives,
@@ -107,24 +91,6 @@ local function AddQuestToDB(questID, questLogIndex)
         }
     end)
 end
-
-local function QuestDataBaseController_OnLoad()
-    local frame = CreateFrame("Frame")
-    frame:RegisterEvent("QUEST_ACCEPTED")
-
-    frame:SetScript("OnEvent", function(self, event, ...)
-        if event == "QUEST_ACCEPTED" then
-            local questLogIndex, questIDFromEvent = ...
-            local questID = questIDFromEvent or GetQuestIDByLogIndex(questLogIndex)
-
-            if questID then
-                AddQuestToDB(questID, questLogIndex)
-            end
-        end
-    end)
-end
-
-_G.QuestDataBaseController_OnLoad = QuestDataBaseController_OnLoad
 
 local function QuestDataBaseController_OnLoad()
     local frame = CreateFrame("Frame")

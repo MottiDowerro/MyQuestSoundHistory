@@ -20,7 +20,7 @@ local function SoundAnouncer_OnLoad()
 
             local numObjectives = GetNumQuestLeaderBoards(questId)
 
-            if numObjectives > 0 then 
+            if numObjectives and numObjectives > 0 then 
                 local allComplete = true
                 local singleCompleted = false
             

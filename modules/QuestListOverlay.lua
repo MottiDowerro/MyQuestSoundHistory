@@ -1,5 +1,3 @@
-local addonName = ...
-
 local uiCreated = false
 
 local overlay
@@ -118,7 +116,7 @@ local function ShowQuestDetails(questID)
             local function FormatRewardItem(item)
                 if type(item) == "table" then
                     local texture = item.texture or "Interface\\Icons\\INV_Misc_QuestionMark"
-                    local link    = item.link or item.name or ""
+                    local link    = item.name or ""
 
                     -- Максимальная видимая длина названия
                     local MAX_LEN = 35
