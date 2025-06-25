@@ -116,7 +116,7 @@ local function ShowQuestDetails(questID)
             local function FormatRewardItem(item)
                 if type(item) == "table" then
                     local texture = item.texture or "Interface\\Icons\\INV_Misc_QuestionMark"
-                    local link    = item.name or ""
+                    local name    = item.name or ""
 
                     -- Максимальная видимая длина названия
                     local MAX_LEN = 35
@@ -135,11 +135,11 @@ local function ShowQuestDetails(questID)
                         end, 1) -- только первое совпадение
                     end
 
-                    link = TruncateItemLink(link)
+                    name = TruncateItemLink(name)
 
                     local ICON_SIZE = 40
                     -- Координаты усечения: обрезаем ~5 пикселей по краям (64px база)
-                    return string.format("|T%s:%d:%d:0:0:64:64:5:59:5:59|t %s", texture, ICON_SIZE, ICON_SIZE, link)
+                    return string.format("|T%s:%d:%d:0:0:64:64:5:59:5:59|t %s", texture, ICON_SIZE, ICON_SIZE, name)
                 else
                     return tostring(item)
                 end
@@ -197,9 +197,9 @@ local function ShowQuestDetails(questID)
                 local texture = item.texture or "Interface\\Icons\\INV_Misc_QuestionMark"
                 row.icon:SetTexture(texture)
 
-                local linkTxt = item.link or item.name or ""
+                local nameTxt = item.name or ""
                 row.text:SetWidth(frameWidth - (ICON_SIZE+10))
-                row.text:SetText(TruncateItemText(linkTxt, 40))
+                row.text:SetText(TruncateItemText(nameTxt, 40))
                 if not row.text.SetMaxLines then
                     row.text:SetHeight(ITEM_HEIGHT - 5)
                 end
@@ -207,20 +207,6 @@ local function ShowQuestDetails(questID)
                 row.iconBorder:SetPoint("LEFT", row, "LEFT", 0, 0)
                 row.text:SetPoint("LEFT", row.iconBorder, "RIGHT", 4, 0)
                 row.text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
-
-                if item.link and item.link:find("|Hitem:") then
-                    row.itemLink = item.link
-                else
-                    local id = item.itemID
-                    if not id and item.name then
-                        id = select(1, GetItemInfoInstant(item.name))
-                    end
-                    if id and id ~= 0 then
-                        row.itemLink = "item:" .. id
-                    else
-                        row.itemLink = nil
-                    end
-                end
 
                 row.itemID = item.itemID
                 row.itemName = item.name
@@ -235,12 +221,7 @@ local function ShowQuestDetails(questID)
                     end
                     self.highlight:Show()
     
-                    -- существующий код для отображения тултипа
-                    if self.itemLink then
-                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                        GameTooltip:SetHyperlink(self.itemLink)
-                        GameTooltip:Show()
-                    elseif self.itemID then
+                    if self.itemID then
                         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                         if GameTooltip.SetItemByID then
                             GameTooltip:SetItemByID(self.itemID)
@@ -249,10 +230,10 @@ local function ShowQuestDetails(questID)
                         end
                         GameTooltip:Show()
                     elseif self.itemName then
-                        local _, link = GetItemInfo(self.itemName)
-                        if link then
+                        local _, name = GetItemInfo(self.itemName)
+                        if name then
                             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                            GameTooltip:SetHyperlink(link)
+                            GameTooltip:SetHyperlink(name)
                             GameTooltip:Show()
                         end
                     end
