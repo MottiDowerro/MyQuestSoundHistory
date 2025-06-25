@@ -1,4 +1,4 @@
-local function QuestDataBaseController_OnLoad_OnLoad()
+local function QuestDataBaseController_OnLoad()
     print('я кошка мяу')
     print('я кошка мяу')
     print('я кошка мяу')
