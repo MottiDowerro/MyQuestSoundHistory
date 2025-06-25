@@ -12,34 +12,40 @@ local function SoundAnouncer_OnLoad()
                 checkForUpdate = arg1
             end
         elseif event == "QUEST_LOG_UPDATE" and checkForUpdate then
-            print(self, event, arg1, arg2)
             local questId = checkForUpdate
+            if not questId or not IsQuestWatched(questId) then
+                checkForUpdate = nil
+                return
+            end
+
             local numObjectives = GetNumQuestLeaderBoards(questId)
 
-            if numObjectives == 0 then 
+            if numObjectives > 0 then 
+                local allComplete = true
+                local singleCompleted = false
+            
+                for i = 1, numObjectives do
+                    local _, _, isCompleted = GetQuestLogLeaderBoard(i, questId)
+                    if isCompleted then
+                        singleCompleted = true
+                    elseif allComplete then
+                        allComplete = false
+                    end
+                end
+            
+                if allComplete and MyQuestSoundHistoryDB.enableWorkComplete then
+                    PlaySoundFile(MyQuestSoundHistoryDB.workCompleteSound)
+                    checkForUpdate = nil
+                    return
+                elseif singleCompleted and MyQuestSoundHistoryDB.enableSingleComplete then
+                    PlaySoundFile(MyQuestSoundHistoryDB.singleCompleteSound)
+                elseif not singleCompleted and MyQuestSoundHistoryDB.enableProgressSound then
+                    PlaySoundFile(MyQuestSoundHistoryDB.progressSound)
+                end
+
+            else
                 checkForUpdate = nil 
                 return 
-            end
-            
-            local allComplete = true
-            local singleCompleted = false
-            
-            for i = 1, numObjectives do
-                local _, _, isCompleted = GetQuestLogLeaderBoard(i, questId)
-                if isCompleted then
-                    singleCompleted = true
-                elseif allComplete then
-                    allComplete = false
-                end
-            end
-            
-            if allComplete and MyQuestSoundHistoryDB.enableWorkComplete then
-                PlaySoundFile(MyQuestSoundHistoryDB.workCompleteSound)
-                checkForUpdate = nil
-            elseif singleCompleted and MyQuestSoundHistoryDB.enableSingleComplete then
-                PlaySoundFile(MyQuestSoundHistoryDB.singleCompleteSound)
-            elseif not singleCompleted and MyQuestSoundHistoryDB.enableProgressSound then
-                PlaySoundFile(MyQuestSoundHistoryDB.progressSound)
             end
         end
     end)
