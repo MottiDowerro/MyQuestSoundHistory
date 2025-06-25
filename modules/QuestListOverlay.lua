@@ -1,16 +1,11 @@
 local addonName = ...
 
--- Флаг, чтобы не создавать UI повторно
 local uiCreated = false
 
--- Ссылки на ключевые элементы UI, понадобятся позже
 local overlay
 local leftScrollFrame, leftContent
 local rightScrollFrame, rightContent, detailsFS, detailsTitle
 
-------------------------------------------------------------
--- Утилиты --------------------------------------------------
-------------------------------------------------------------
 local function SetBackdrop(frame, color, borderColor)
     frame:SetBackdrop({
         bgFile   = "Interface\\Buttons\\WHITE8x8",
@@ -24,7 +19,6 @@ local function SetBackdrop(frame, color, borderColor)
     frame:SetBackdropBorderColor(unpack(borderColor))
 end
 
--- Быстрое создание FontString с нужными параметрами
 local function CreateFS(parent, template, width)
     local fs = parent:CreateFontString(nil, "ARTWORK", template or "GameFontHighlight")
     fs:SetJustifyH("LEFT")
@@ -36,9 +30,6 @@ local function CreateFS(parent, template, width)
     return fs
 end
 
-------------------------------------------------------------
--- Правый блок: подробная информация о задании --------------
-------------------------------------------------------------
 local function ShowQuestDetails(questID)
     if not MQSH_QuestDB or not MQSH_QuestDB[questID] then return end
 
@@ -49,31 +40,32 @@ local function ShowQuestDetails(questID)
     local grey  = "|cffAAAAAA"
     local reset = "|r"
 
-    -- Обновляем заголовок
     if detailsTitle then
         detailsTitle:SetText(gold .. q.title .. reset)
-        -- Перепривязываем описание чуть ниже заголовка и слева
         detailsFS:ClearAllPoints()
         detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -detailsTitle:GetStringHeight() - 5)
     end
 
     local text = {}
-    -- Описание
     if q.description and q.description ~= "" then
-        table.insert(text, white .. q.description .. reset .. "\n")
+        local desc = q.description:gsub("\n+$", "")
+        table.insert(text, white .. desc .. reset)
+        table.insert(text, "\n\n")
     end
-    -- Цели задания
     if q.objectives and #q.objectives > 0 then
         table.insert(text, gold .. "Цели:" .. reset .. "\n")
         for _, obj in ipairs(q.objectives) do
             table.insert(text, "  - " .. obj .. "\n")
         end
-        table.insert(text, "\n")
     end
-    -- Награды
     if q.rewards then
         local hasRewards = (#q.rewards.items > 0) or (#q.rewards.choices > 0) or (q.rewards.money and q.rewards.money > 0)
         if hasRewards then
+            -- Добавляем пустую строку перед блоком наград, если есть предыдущий текст
+            if #text > 0 then
+                table.insert(text, "\n")
+            end
+
             table.insert(text, gold .. "Награды:" .. reset .. "\n")
             if q.rewards.money and q.rewards.money > 0 then
                 table.insert(text, "  " .. GetCoinTextureString(q.rewards.money) .. "\n")
@@ -90,22 +82,18 @@ local function ShowQuestDetails(questID)
         end
     end
 
-    -- Объединяем всё в одну строку
-    detailsFS:SetText(table.concat(text, ""))
+    if detailsFS then
+        detailsFS:SetText(table.concat(text, ""))
+    end
 
-    -- Обновляем высоту контейнера, чтобы скролл работал корректно
     local totalHeight = detailsTitle:GetStringHeight() + detailsFS:GetStringHeight() + 25
     rightContent:SetHeight(totalHeight)
     rightScrollFrame:SetVerticalScroll(0)
 end
 
-------------------------------------------------------------
--- Левый блок: список квестов ------------------------------
-------------------------------------------------------------
 local function BuildQuestList()
     if not leftContent then return end
 
-    -- Очищаем старые кнопки если они были
     if leftContent.buttons then
         for _, btn in ipairs(leftContent.buttons) do
             btn:Hide()
@@ -160,33 +148,22 @@ local function BuildQuestList()
         btn:Show()
     end
 
-    -- Скрываем неиспользуемые кнопки (могли остаться от предыдущего построения)
     for i = #questIDs + 1, #leftContent.buttons do
         leftContent.buttons[i]:Hide()
     end
 
-    -- Обновляем высоту контента для скролла
     leftContent:SetHeight(#questIDs * btnHeight)
     leftScrollFrame:SetVerticalScroll(0)
 end
 
-------------------------------------------------------------
--- Создание интерфейса -------------------------------------
-------------------------------------------------------------
 local function TryCreateQuestListUI()
     if uiCreated or not QuestLogFrame then return end
 
-    --------------------------------------------------------
-    -- Кнопка вызова окна ----------------------------------
-    --------------------------------------------------------
     local showBtn = CreateFrame("Button", "MQSH_ShowListButton", QuestLogFrame, "UIPanelButtonTemplate")
     showBtn:SetSize(80, 22)
     showBtn:SetText("История")
     showBtn:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -150, -30)
 
-    --------------------------------------------------------
-    -- Основной оверлей ------------------------------------
-    --------------------------------------------------------
     overlay = CreateFrame("Frame", "MQSH_ListOverlay", QuestLogFrame)
     overlay:SetAllPoints(QuestLogFrame)
     SetBackdrop(overlay, {0.05, 0.05, 0.05, 0.95}, {1, 1, 1, 1})
@@ -195,13 +172,9 @@ local function TryCreateQuestListUI()
 
     overlay:EnableMouse(true)
 
-    -- Кнопка закрытия
     local closeBtn = CreateFrame("Button", nil, overlay, "UIPanelCloseButton")
     closeBtn:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", -5, -5)
 
-    --------------------------------------------------------
-    -- Левый блок ------------------------------------------
-    --------------------------------------------------------
     local leftWindow = CreateFrame("Frame", nil, overlay)
     leftWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", 10, -40)
     leftWindow:SetPoint("BOTTOMLEFT", overlay, "BOTTOMLEFT", 10, 10)
@@ -221,9 +194,6 @@ local function TryCreateQuestListUI()
     leftContent:SetSize(leftScrollFrame:GetWidth(), 1)
     leftScrollFrame:SetScrollChild(leftContent)
 
-    --------------------------------------------------------
-    -- Правый блок -----------------------------------------
-    --------------------------------------------------------
     local rightWindow = CreateFrame("Frame", nil, overlay)
     rightWindow:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", -10, -40)
     rightWindow:SetPoint("BOTTOMRIGHT", overlay, "BOTTOMRIGHT", -10, 10)
@@ -243,24 +213,19 @@ local function TryCreateQuestListUI()
     rightContent:SetSize(rightScrollFrame:GetWidth(), 1)
     rightScrollFrame:SetScrollChild(rightContent)
 
-    -- Заголовок квеста (большой шрифт, по центру)
     detailsTitle = CreateFS(rightContent, "GameFontNormalLarge")
     detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
     detailsTitle:SetJustifyH("LEFT")
 
-    -- Основной текст (позиция скорректируется в ShowQuestDetails)
     detailsFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
     detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -25)
 
-    --------------------------------------------------------
-    -- Поведение окна --------------------------------------
-    --------------------------------------------------------
     showBtn:SetScript("OnClick", function()
         if overlay:IsShown() then
             overlay:Hide()
         else
             overlay:Show()
-            BuildQuestList() -- Обновляем список при каждом открытии
+            BuildQuestList()
         end
     end)
 
@@ -269,9 +234,6 @@ local function TryCreateQuestListUI()
     uiCreated = true
 end
 
-------------------------------------------------------------
--- Инициализация после загрузки -----------------------------
-------------------------------------------------------------
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("PLAYER_LOGIN")
 loader:RegisterEvent("ADDON_LOADED")
