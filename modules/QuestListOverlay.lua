@@ -5,6 +5,7 @@ local uiCreated = false
 local overlay
 local leftScrollFrame, leftContent
 local rightScrollFrame, rightContent, detailsFS, detailsTitle
+local selectedButton -- currently highlighted quest button
 
 local function SetBackdrop(frame, color, borderColor)
     frame:SetBackdrop({
@@ -59,7 +60,7 @@ local function ShowQuestDetails(questID)
         end
     end
     if q.rewards then
-        local hasRewards = (#q.rewards.items > 0) or (#q.rewards.choices > 0) or (q.rewards.money and q.rewards.money > 0)
+        local hasRewards = (#q.rewards.items > 0) or (#q.rewards.choices > 0) or (q.rewards.money and q.rewards.money > 0) or (q.rewards.xp and q.rewards.xp > 0)
         if hasRewards then
             -- Добавляем пустую строку перед блоком наград, если есть предыдущий текст
             if #text > 0 then
@@ -67,17 +68,29 @@ local function ShowQuestDetails(questID)
             end
 
             table.insert(text, gold .. "Награды:" .. reset .. "\n")
-            if q.rewards.money and q.rewards.money > 0 then
-                table.insert(text, "  " .. GetCoinTextureString(q.rewards.money) .. "\n")
-            end
-            for _, item in ipairs(q.rewards.items) do
-                table.insert(text, "  " .. item .. "\n")
-            end
+
+            -- 1) Предметы на выбор
             if #q.rewards.choices > 0 then
                 table.insert(text, grey .. "  Возможный выбор: " .. reset .. "\n")
                 for _, item in ipairs(q.rewards.choices) do
                     table.insert(text, "    " .. item .. "\n")
                 end
+            end
+
+            -- 2) Гарантированные предметы
+            for _, item in ipairs(q.rewards.items) do
+                table.insert(text, "  " .. item .. "\n")
+            end
+            table.insert(text, "\n")
+
+            -- 3) Деньги
+            if q.rewards.money and q.rewards.money > 0 then
+                table.insert(text, "  Вы также получите: " .. GetCoinTextureString(q.rewards.money) .. "\n\n")
+            end
+
+            -- 4) Опыт
+            if q.rewards.xp and q.rewards.xp > 0 then
+                table.insert(text, "  Опыт: " .. ((BreakUpLargeNumbers and BreakUpLargeNumbers(q.rewards.xp)) or q.rewards.xp) .. "\n\n")
             end
         end
     end
@@ -89,6 +102,16 @@ local function ShowQuestDetails(questID)
     local totalHeight = detailsTitle:GetStringHeight() + detailsFS:GetStringHeight() + 25
     rightContent:SetHeight(totalHeight)
     rightScrollFrame:SetVerticalScroll(0)
+end
+
+local function HighlightQuestButton(btn)
+    if selectedButton and selectedButton.selTexture then
+        selectedButton.selTexture:Hide()
+    end
+    selectedButton = btn
+    if selectedButton and selectedButton.selTexture then
+        selectedButton.selTexture:Show()
+    end
 end
 
 local function BuildQuestList()
@@ -132,6 +155,13 @@ local function BuildQuestList()
             btn.text = CreateFS(btn, "GameFontNormal")
             btn.text:SetAllPoints(btn)
             btn.text:SetJustifyH("LEFT")
+
+            -- selection texture (hidden by default)
+            btn.selTexture = btn:CreateTexture(nil, "BACKGROUND")
+            btn.selTexture:SetAllPoints(btn)
+            btn.selTexture:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+            btn.selTexture:SetBlendMode("ADD")
+            btn.selTexture:Hide()
         end
 
         btn.questID = qID
@@ -142,6 +172,7 @@ local function BuildQuestList()
         btn.text:SetText(gold .. (data.title or ("Quest " .. tostring(qID))) .. reset)
 
         btn:SetScript("OnClick", function(self)
+            HighlightQuestButton(self)
             ShowQuestDetails(self.questID)
         end)
 
@@ -154,6 +185,15 @@ local function BuildQuestList()
 
     leftContent:SetHeight(#questIDs * btnHeight)
     leftScrollFrame:SetVerticalScroll(0)
+
+    -- Автовыбор первого квеста, если ничего не выбрано
+    if #questIDs > 0 and (not selectedButton or not selectedButton:IsShown()) then
+        local firstBtn = leftContent.buttons[1]
+        if firstBtn then
+            HighlightQuestButton(firstBtn)
+            ShowQuestDetails(firstBtn.questID)
+        end
+    end
 end
 
 local function TryCreateQuestListUI()
@@ -173,10 +213,10 @@ local function TryCreateQuestListUI()
     overlay:EnableMouse(true)
 
     local closeBtn = CreateFrame("Button", nil, overlay, "UIPanelCloseButton")
-    closeBtn:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", -5, -5)
+    closeBtn:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", -2, -2)
 
     local leftWindow = CreateFrame("Frame", nil, overlay)
-    leftWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", 10, -40)
+    leftWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", 10, -30)
     leftWindow:SetPoint("BOTTOMLEFT", overlay, "BOTTOMLEFT", 10, 10)
     leftWindow:SetWidth((QuestLogFrame:GetWidth() - 30) / 2)
     SetBackdrop(leftWindow, {0.1, 0.1, 0.1, 0.95}, {1, 1, 1, 1})
@@ -195,7 +235,7 @@ local function TryCreateQuestListUI()
     leftScrollFrame:SetScrollChild(leftContent)
 
     local rightWindow = CreateFrame("Frame", nil, overlay)
-    rightWindow:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", -10, -40)
+    rightWindow:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", -10, -30)
     rightWindow:SetPoint("BOTTOMRIGHT", overlay, "BOTTOMRIGHT", -10, 10)
     rightWindow:SetWidth((QuestLogFrame:GetWidth() - 30) / 2)
     SetBackdrop(rightWindow, {0.1, 0.1, 0.1, 0.95}, {1, 1, 1, 1})
