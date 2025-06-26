@@ -285,7 +285,19 @@ local function SetupRewardItems(q)
         row:SetWidth(frameWidth)
         row:SetHeight(ITEM_HEIGHT)
         
-        local texture = item.texture or "Interface\\Icons\\INV_Misc_QuestionMark"
+        -- Получаем текстуру предмета динамически
+        local texture = "Interface\\Icons\\INV_Misc_QuestionMark"
+        if item.itemID then
+            local itemTexture = GetItemIcon(item.itemID)
+            if itemTexture then
+                texture = itemTexture
+            end
+        elseif item.name then
+            local _, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo(item.name)
+            if itemTexture then
+                texture = itemTexture
+            end
+        end
         row.icon:SetTexture(texture)
         
         local nameTxt = item.name or ""

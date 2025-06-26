@@ -54,11 +54,24 @@ local function GetQuestIDAndData(questLogIndex)
             local numRewards = GetNumQuestLogRewards()
             if numRewards and numRewards > 0 then
                 for i = 1, numRewards do
-                    local itemName, itemTexture, _, _, _, itemID = GetQuestLogRewardInfo(i)
+                    local itemName, _, _, _, _, itemID = GetQuestLogRewardInfo(i)
                     if itemName then
                         table.insert(rewards.items, {
                             name    = itemName,
-                            texture = itemTexture,
+                            itemID  = itemID,
+                        })
+                    end
+                end
+            end
+
+            -- Добавление предметов выбора
+            local numChoices = GetNumQuestLogChoices()
+            if numChoices and numChoices > 0 then
+                for i = 1, numChoices do
+                    local itemName, _, _, _, _, itemID = GetQuestLogChoiceInfo(i)
+                    if itemName then
+                        table.insert(rewards.choices, {
+                            name    = itemName,
                             itemID  = itemID,
                         })
                     end
