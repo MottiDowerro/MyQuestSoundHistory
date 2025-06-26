@@ -389,7 +389,7 @@ local function BuildQuestList()
         return a < b
     end)
 
-    local btnHeight = 16
+    local btnHeight = 17
     local width = leftScrollFrame:GetWidth() - 5
     local reset = "|r"
 
@@ -403,13 +403,17 @@ local function BuildQuestList()
             -- Создание текста для кнопки
             btn.text = btn:CreateFontString(nil, "ARTWORK", "GameFontNormal")
             btn.text:SetJustifyH("LEFT")
-            btn.text:SetTextColor(1, 1, 1)
+            btn.text:SetTextColor(1, 1, 1) -- стандартный цвет
 
             -- Сдвиг текста вправо и вниз
             local xOffset = 7  -- Отступ вправо (в пикселях)
-            local yOffset = 0 -- Отступ вниз (в пикселях)
+            local yOffset = 0  -- Отступ вниз (в пикселях)
             btn.text:SetPoint("TOPLEFT", btn, "TOPLEFT", xOffset, yOffset)
             btn.text:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -xOffset, yOffset)
+
+            -- Сохранение исходных координат текста
+            btn.text.xOffset = xOffset
+            btn.text.yOffset = yOffset
 
             -- Выделение фона при выборе
             btn.selTexture = btn:CreateTexture(nil, "BACKGROUND")
@@ -421,18 +425,49 @@ local function BuildQuestList()
 
         btn.questID = qID
         btn:SetHeight(btnHeight)
-        btn:SetPoint("TOPLEFT", leftContent, "TOPLEFT", 0, -(index - 1) * btnHeight)
-        btn:SetPoint("TOPRIGHT", leftContent, "TOPRIGHT", 0, -(index - 1) * btnHeight)
+
+        -- Увеличиваем расстояние между кнопками на 1 пиксель
+        local spacing = 1  -- Дополнительное расстояние между кнопками
+        btn:SetPoint("TOPLEFT", leftContent, "TOPLEFT", 0, -(index - 1) * (btnHeight + spacing))
+        btn:SetPoint("TOPRIGHT", leftContent, "TOPRIGHT", 0, -(index - 1) * (btnHeight + spacing))
 
         -- Установка текста кнопки с уровнем квеста
         local title = data.title or ("Quest " .. tostring(qID))
         local level = data.level or "?" -- Если уровень неизвестен, показываем "?"
+        local color
+        if type(level) == "number" then
+            color = GetQuestDifficultyColor(level)
+        else
+            color = { r = 1, g = 0, b = 0 }
+        end
+        btn.text:SetTextColor(color.r, color.g, color.b)
         btn.text:SetText(string.format("[%d] %s%s", level, title, reset))
 
         -- Обработчик клика
+        btn:SetScript("OnMouseDown", function(self)
+            -- При нажатии сдвигаем текст на 1 пиксель вниз и вправо
+            self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset + 2, self.text.yOffset - 2)
+            self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset + 2, self.text.yOffset - 2)
+        end)
+
+        btn:SetScript("OnMouseUp", function(self)
+            -- При отпускании возвращаем текст в исходное положение
+            self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset, self.text.yOffset)
+            self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset, self.text.yOffset)
+        end)
+
         btn:SetScript("OnClick", function(self)
             HighlightQuestButton(self)
             ShowQuestDetails(self.questID)
+        end)
+
+        -- Изменение цвета текста при наведении мыши
+        btn:SetScript("OnEnter", function(self)
+            self.text:SetTextColor(1, 1, 1)
+        end)
+
+        btn:SetScript("OnLeave", function(self)
+            self.text:SetTextColor(color.r, color.g, color.b)
         end)
 
         btn:Show()
@@ -466,7 +501,8 @@ local function TryCreateQuestListUI()
     showBtn:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -150, -30)
 
     overlay = CreateFrame("Frame", "MQSH_ListOverlay", QuestLogFrame)
-    overlay:SetAllPoints(QuestLogFrame)
+    overlay:SetPoint("TOPLEFT", QuestLogFrame, "TOPLEFT", 11, -12)
+    overlay:SetPoint("BOTTOMRIGHT", QuestLogFrame, "BOTTOMRIGHT", -1, 11)
     SetBackdrop(overlay, {0.05, 0.05, 0.05, 0.85}, {0, 0, 0, 0.95})
     overlay:SetFrameStrata("DIALOG")
     overlay:Hide()
@@ -480,7 +516,7 @@ local function TryCreateQuestListUI()
     leftWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", 10, -30)
     leftWindow:SetPoint("BOTTOMLEFT", overlay, "BOTTOMLEFT", 10, 10)
     leftWindow:SetWidth((QuestLogFrame:GetWidth() - 30) / 2)
-    SetBackdrop(leftWindow, {0.08, 0.08, 0.08, 0.90}, {0, 0, 0, 0.95})
+    SetBackdrop(leftWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
 
     local leftTitle = CreateFS(leftWindow, "GameFontNormal")
     leftTitle:SetPoint("TOP", leftWindow, "TOP", 0, -5)
@@ -499,7 +535,7 @@ local function TryCreateQuestListUI()
     rightWindow:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", -10, -30)
     rightWindow:SetPoint("BOTTOMRIGHT", overlay, "BOTTOMRIGHT", -10, 10)
     rightWindow:SetWidth((QuestLogFrame:GetWidth() - 30) / 2)
-    SetBackdrop(rightWindow, {0.08, 0.08, 0.08, 0.90}, {0, 0, 0, 0.95})
+    SetBackdrop(rightWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
 
     rightScrollFrame = CreateFrame("ScrollFrame", nil, rightWindow, "UIPanelScrollFrameTemplate")
     rightScrollFrame:SetPoint("TOPLEFT", rightWindow, "TOPLEFT", 10, -10)
@@ -522,8 +558,11 @@ local function TryCreateQuestListUI()
             overlay:Hide()
         else
             overlay:Show()
-            BuildQuestList()
         end
+    end)
+
+    hooksecurefunc(QuestLogFrame, "Hide", function()
+        overlay:Hide()
     end)
 
     overlay:SetScript("OnShow", BuildQuestList)
