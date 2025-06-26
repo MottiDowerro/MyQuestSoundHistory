@@ -19,7 +19,7 @@ local function GetQuestIDAndData(questLogIndex)
 
     WithQuestLogSelection(questLogIndex, function()
         -- Получаем ID квеста
-        local _, _, _, _, _, _, _, qID = GetQuestLogTitle(questLogIndex)
+        local title, level, _, _, _, _, _, qID = GetQuestLogTitle(questLogIndex)
         if qID and qID ~= 0 then
             questID = qID
         elseif GetQuestID then
@@ -28,7 +28,6 @@ local function GetQuestIDAndData(questLogIndex)
 
         -- Если ID найден, собираем данные о квесте
         if questID then
-            local title, level = select(1, GetQuestLogTitle(questLogIndex)) or "Unknown", select(2, GetQuestLogTitle(questLogIndex)) or 0
             local description, objectivesText = GetQuestLogQuestText()
 
             -- Получение целей квеста
@@ -47,8 +46,8 @@ local function GetQuestIDAndData(questLogIndex)
             local rewards = {
                 items   = {},
                 choices = {},
-                money   = GetQuestLogRewardMoney() or 0,
-                xp      = GetQuestLogRewardXP and (GetQuestLogRewardXP() or 0) or nil,
+                money   = GetQuestLogRewardMoney(),
+                xp      = GetQuestLogRewardXP(),
             }
 
             -- Добавление предметов в награды

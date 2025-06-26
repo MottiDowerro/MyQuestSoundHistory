@@ -51,14 +51,14 @@ local function ShowQuestDetails(questID)
     local white = "|cffffffff"
     local grey  = "|cffAAAAAA"
     local reset = "|r"
+    local title = q.title or ("ID " .. tostring(questID))
 
     if detailsTitle then
-        detailsTitle:SetText(gold .. q.title .. reset)
+        detailsTitle:SetText(gold .. title .. reset)
         detailsFS:ClearAllPoints()
         detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -detailsTitle:GetStringHeight() - 5)
     end
 
-    -- Summary целей (objectivesText)
     if not objectivesSummaryFS then
         objectivesSummaryFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
         objectivesSummaryFS:SetJustifyH("LEFT")
@@ -432,8 +432,8 @@ local function BuildQuestList()
         btn:SetPoint("TOPRIGHT", leftContent, "TOPRIGHT", 0, -(index - 1) * (btnHeight + spacing))
 
         -- Установка текста кнопки с уровнем квеста
-        local title = data.title or ("Quest " .. tostring(qID))
-        local level = data.level or "?" -- Если уровень неизвестен, показываем "?"
+        local title = data.title or ("ID " .. tostring(qID))
+        local level = data.level or "??" -- Если уровень неизвестен, показываем "??"
         local color
         if type(level) == "number" then
             color = GetQuestDifficultyColor(level)
@@ -441,7 +441,7 @@ local function BuildQuestList()
             color = { r = 1, g = 0, b = 0 }
         end
         btn.text:SetTextColor(color.r, color.g, color.b)
-        btn.text:SetText(string.format("[%d] %s%s", level, title, reset))
+        btn.text:SetText(string.format("[%s] %s%s", level, title, reset))
 
         -- Обработчик клика
         btn:SetScript("OnMouseDown", function(self)
