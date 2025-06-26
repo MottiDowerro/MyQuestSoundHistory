@@ -42,44 +42,54 @@ local function RemoveFontOutline(fs)
     end
 end
 
-local function ShowQuestDetails(questID)
-    if not MQSH_QuestDB or not MQSH_QuestDB[questID] then return end
+-- ============================================================================
+-- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ОТОБРАЖЕНИЯ ДЕТАЛЕЙ КВЕСТА
+-- ============================================================================
 
-    local q = MQSH_QuestDB[questID]
+local function ClearQuestDetails()
+    -- Принудительная очистка всех UI-элементов перед отображением нового квеста
+    if objectivesSummaryFS then objectivesSummaryFS:SetText("") end
+    if objectivesTextFS then objectivesTextFS:SetText("") end
+    if detailsFS then detailsFS:SetText("") end
+    if rewardsHeadingFS then rewardsHeadingFS:SetText("") end
+    if rewardExtraFS then rewardExtraFS:SetText("") end
+    if choiceLabelFS then choiceLabelFS:SetText("") end
+    
+    -- Скрываем все фреймы наград
+    for _, f in ipairs(rewardItemFrames) do f:Hide() end
+    rewardsVisibleCount = 0
+end
 
-    local gold  = "|cffFFD100"
-    local white = "|cffffffff"
-    local grey  = "|cffAAAAAA"
+local function SetupQuestTitle(questID, q)
+    local gold = "|cffFFD100"
     local reset = "|r"
     local title = q.title or ("ID " .. tostring(questID))
-
+    
     if detailsTitle then
         detailsTitle:SetText(gold .. title .. reset)
-        detailsFS:ClearAllPoints()
-        detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -detailsTitle:GetStringHeight() - 5)
     end
+end
 
+local function SetupObjectivesSummary(q)
+    local white = "|cffffffff"
+    local reset = "|r"
+    
     if not objectivesSummaryFS then
         objectivesSummaryFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
         objectivesSummaryFS:SetJustifyH("LEFT")
     end
+    
     if q.objectivesText and q.objectivesText ~= "" then
         objectivesSummaryFS:SetText(white .. q.objectivesText .. reset)
     else
         objectivesSummaryFS:SetText("")
     end
+end
 
-    local descText = ""
-    if q.description and q.description ~= "" then
-        descText = white .. q.description:gsub("\n+$", "") .. reset
-    end
-
-    -- Создаём/обновляем блок описания
-    if detailsFS then
-        detailsFS:SetText(descText)
-    end
-
-    -- Цели (без заголовка)
+local function SetupDetailedObjectives(q)
+    local grey = "|cffAAAAAA"
+    local reset = "|r"
+    
     if q.objectives and #q.objectives > 0 then
         if not objectivesTextFS then
             objectivesTextFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
@@ -94,264 +104,299 @@ local function ShowQuestDetails(questID)
     elseif objectivesTextFS then
         objectivesTextFS:SetText("")
     end
+end
 
+local function SetupDescription(q)
+    local white = "|cffffffff"
+    local gold = "|cffFFD100"
+    local reset = "|r"
+    
     -- Заголовок «Описание»
     if not descHeadingFS then
         descHeadingFS = CreateFS(rightContent, "GameFontNormalHuge")
         RemoveFontOutline(descHeadingFS)
         descHeadingFS:SetJustifyH("LEFT")
     end
-    descHeadingFS:SetText(gold .. "Описание:" .. reset)
-
-    if q.rewards then
-        local hasRewards = (#q.rewards.items > 0) or (#q.rewards.choices > 0) or (q.rewards.money and q.rewards.money > 0) or (q.rewards.xp and q.rewards.xp > 0)
-        if hasRewards then
-            -- Динамический заголовок «Награды» крупным шрифтом
-            if not rewardsHeadingFS then
-                rewardsHeadingFS = CreateFS(rightContent, "GameFontNormalHuge")
-                RemoveFontOutline(rewardsHeadingFS)
-            end
-
-            -- Вспомогательная функция для форматирования предмета с иконкой
-            local function FormatRewardItem(item)
-                if type(item) == "table" then
-                    local texture = item.texture or "Interface\\Icons\\INV_Misc_QuestionMark"
-                    local name    = item.name or ""
-
-                    -- Максимальная видимая длина названия
-                    local MAX_LEN = 35
-
-                    -- Функция обрезки названия внутри ссылки, чтобы не ломать цвет/линк
-                    local function TruncateItemLink(l)
-                        if type(l) ~= "string" then return l end
-
-                        return l:gsub("%[(.-)%]", function(name)
-                            if strlenutf8(name) > MAX_LEN then
-                                local trimmed = strsub(name, 1, MAX_LEN - 3) .. "..."
-                                return "[" .. trimmed .. "]"
-                            else
-                                return "[" .. name .. "]"
-                            end
-                        end, 1) -- только первое совпадение
-                    end
-
-                    name = TruncateItemLink(name)
-
-                    local ICON_SIZE = 40
-                    -- Координаты усечения: обрезаем ~5 пикселей по краям (64px база)
-                    return string.format("|T%s:%d:%d:0:0:64:64:5:59:5:59|t %s", texture, ICON_SIZE, ICON_SIZE, name)
-                else
-                    return tostring(item)
-                end
-            end
-
-            -- Собираем список предметов (choices + items)
-            local rewardItems = {}
-            if #q.rewards.choices > 0 then
-                for _, item in ipairs(q.rewards.choices) do
-                    table.insert(rewardItems, item)
-                end
-            end
-            for _, item in ipairs(q.rewards.items) do
-                table.insert(rewardItems, item)
-            end
-
-            rewardsHeadingFS:SetText(gold .. "Награды:" .. reset)
-
-            -- Создаём/обновляем фреймы для каждого предмета
-            local function TruncateItemText(text, maxLen)
-                if strlenutf8(text) <= maxLen then return text end
-                return strsub(text, 1, maxLen - 3) .. "..."
-            end
-
-            local ICON_SIZE = 40
-            local ITEM_HEIGHT = ICON_SIZE + 4
-
-            local frameWidth = rightScrollFrame:GetWidth()
-
-            for i, item in ipairs(rewardItems) do
-                local row = rewardItemFrames[i]
-                if not row then
-                    row = CreateFrame("Frame", nil, rightContent)
-                    SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
-                    row:EnableMouse(true)
-                    rewardItemFrames[i] = row
-
-                    row.iconBorder = CreateFrame("Frame", nil, row)
-                    SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
-                    row.iconBorder:SetSize(ICON_SIZE+4, ICON_SIZE+4)
-
-                    row.icon = row.iconBorder:CreateTexture(nil, "ARTWORK")
-                    row.icon:SetPoint("CENTER")
-                    row.icon:SetSize(ICON_SIZE, ICON_SIZE)
-                    row.icon:SetTexCoord(5/64,59/64,5/64,59/64)
-
-                    row.text = CreateFS(row, "GameFontHighlight")
-                    row.text:SetJustifyH("LEFT")
-                    row.text:SetJustifyV("MIDDLE")
-                end
-                row:SetWidth(frameWidth)
-                row:SetHeight(ITEM_HEIGHT)
-
-                -- Set content
-                local texture = item.texture or "Interface\\Icons\\INV_Misc_QuestionMark"
-                row.icon:SetTexture(texture)
-
-                local nameTxt = item.name or ""
-                row.text:SetWidth(frameWidth - (ICON_SIZE+10))
-                row.text:SetText(TruncateItemText(nameTxt, 40))
-                if not row.text.SetMaxLines then
-                    row.text:SetHeight(ITEM_HEIGHT - 5)
-                end
-
-                row.iconBorder:SetPoint("LEFT", row, "LEFT", 0, 0)
-                row.text:SetPoint("LEFT", row.iconBorder, "RIGHT", 4, 0)
-                row.text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
-
-                row.itemID = item.itemID
-                row.itemName = item.name
-
-                row:SetScript("OnEnter", function(self)
-                    if not self.highlight then
-                        self.highlight = self:CreateTexture(nil, "BACKGROUND")
-                        self.highlight:SetAllPoints(self)
-                        self.highlight:SetTexture("Interface\\Buttons\\WHITE8x8")
-                        self.highlight:SetAlpha(0.4)
-                        self.highlight:SetBlendMode("ADD")
-                    end
-                    self.highlight:Show()
     
-                    if self.itemID then
-                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                        if GameTooltip.SetItemByID then
-                            GameTooltip:SetItemByID(self.itemID)
-                        else
-                            GameTooltip:SetHyperlink("item:" .. self.itemID)
-                        end
-                        GameTooltip:Show()
-                    elseif self.itemName then
-                        local _, name = GetItemInfo(self.itemName)
-                        if name then
-                            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                            GameTooltip:SetHyperlink(name)
-                            GameTooltip:Show()
-                        end
-                    end
-                end)
-
-                row:SetScript("OnLeave", function(self)
-                    if self.highlight then
-                        self.highlight:Hide()
-                    end
-                    GameTooltip:Hide()
-                end)
-
-                row:Show()
-            end
-
-            -- Hide unused frames
-            for i = #rewardItems + 1, #rewardItemFrames do
-                rewardItemFrames[i]:Hide()
-            end
-
-            -- Сохраняем количество видимых наград для раскладки
-            rewardsVisibleCount = #rewardItems
-
-            -- Дополнительные награды (деньги/опыт)
-            if not rewardExtraFS then
-                rewardExtraFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
-            end
-
-            local extraLines = {}
-            if q.rewards.money and q.rewards.money > 0 then
-                local coinStr = GetCoinTextureString(q.rewards.money, 20)
-                table.insert(extraLines, "Вы также получите: " .. coinStr)
-            end
-
-            if q.rewards.xp and q.rewards.xp > 0 then
-                table.insert(extraLines, "Опыт: " .. ((BreakUpLargeNumbers and BreakUpLargeNumbers(q.rewards.xp)) or q.rewards.xp))
-            end
-
-            rewardExtraFS:SetSpacing(4) -- небольшой отступ между строками
-            rewardExtraFS:SetText(table.concat(extraLines, "\n"))
-
-        elseif rewardsHeadingFS then
-            rewardsHeadingFS:SetText("")
-            -- Скрываем все ранее созданные фреймы
-            for _, f in ipairs(rewardItemFrames) do f:Hide() end
+    if q.description and q.description ~= "" then
+        descHeadingFS:SetText(gold .. "Описание:" .. reset)
+        
+        -- Текст описания
+        local descText = white .. q.description:gsub("\n+$", "") .. reset
+        if detailsFS then
+            detailsFS:SetText(descText)
+        end
+    else
+        descHeadingFS:SetText("")
+        if detailsFS then
+            detailsFS:SetText("")
         end
     end
+end
 
-    -- Теперь перестраиваем расположение блоков в rightContent
+local function CreateRewardItemFrame(index)
+    local ICON_SIZE = 40
+    local ITEM_HEIGHT = ICON_SIZE + 4
+    
+    local row = CreateFrame("Frame", nil, rightContent)
+    SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
+    row:EnableMouse(true)
+
+    row.iconBorder = CreateFrame("Frame", nil, row)
+    SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
+    row.iconBorder:SetSize(ICON_SIZE+4, ICON_SIZE+4)
+
+    row.icon = row.iconBorder:CreateTexture(nil, "ARTWORK")
+    row.icon:SetPoint("CENTER")
+    row.icon:SetSize(ICON_SIZE, ICON_SIZE)
+    row.icon:SetTexCoord(5/64,59/64,5/64,59/64)
+
+    row.text = CreateFS(row, "GameFontHighlight")
+    row.text:SetJustifyH("LEFT")
+    row.text:SetJustifyV("MIDDLE")
+    
+    return row
+end
+
+local function SetupRewardItemTooltip(row)
+    row:SetScript("OnEnter", function(self)
+        if not self.highlight then
+            self.highlight = self:CreateTexture(nil, "BACKGROUND")
+            self.highlight:SetAllPoints(self)
+            self.highlight:SetTexture("Interface\\Buttons\\WHITE8x8")
+            self.highlight:SetAlpha(0.4)
+            self.highlight:SetBlendMode("ADD")
+        end
+        self.highlight:Show()
+
+        if self.itemID then
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            if GameTooltip.SetItemByID then
+                GameTooltip:SetItemByID(self.itemID)
+            else
+                GameTooltip:SetHyperlink("item:" .. self.itemID)
+            end
+            GameTooltip:Show()
+        elseif self.itemName then
+            local _, name = GetItemInfo(self.itemName)
+            if name then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetHyperlink(name)
+                GameTooltip:Show()
+            end
+        end
+    end)
+
+    row:SetScript("OnLeave", function(self)
+        if self.highlight then
+            self.highlight:Hide()
+        end
+        GameTooltip:Hide()
+    end)
+end
+
+local function SetupRewardItems(q)
+    if not q.rewards then return end
+    
+    local hasRewards = (#q.rewards.items > 0) or (#q.rewards.choices > 0) or 
+                      (q.rewards.money and q.rewards.money > 0) or 
+                      (q.rewards.xp and q.rewards.xp > 0)
+    
+    if not hasRewards then return end
+    
+    -- Создаём заголовок «Награды»
+    if not rewardsHeadingFS then
+        rewardsHeadingFS = CreateFS(rightContent, "GameFontNormalHuge")
+        RemoveFontOutline(rewardsHeadingFS)
+    end
+    rewardsHeadingFS:SetText("|cffFFD100Награды:|r")
+    
+    -- Собираем все предметы наград
+    local rewardItems = {}
+    if #q.rewards.choices > 0 then
+        for _, item in ipairs(q.rewards.choices) do
+            table.insert(rewardItems, item)
+        end
+    end
+    for _, item in ipairs(q.rewards.items) do
+        table.insert(rewardItems, item)
+    end
+    
+    -- Создаём/обновляем фреймы для предметов
+    local ICON_SIZE = 40
+    local ITEM_HEIGHT = ICON_SIZE + 4
+    local frameWidth = rightScrollFrame:GetWidth()
+    
+    for i, item in ipairs(rewardItems) do
+        local row = rewardItemFrames[i]
+        if not row then
+            row = CreateRewardItemFrame(i)
+            rewardItemFrames[i] = row
+            SetupRewardItemTooltip(row)
+        end
+        
+        -- Настраиваем размеры и позиции
+        row:SetWidth(frameWidth)
+        row:SetHeight(ITEM_HEIGHT)
+        
+        -- Устанавливаем содержимое
+        local texture = item.texture or "Interface\\Icons\\INV_Misc_QuestionMark"
+        row.icon:SetTexture(texture)
+        
+        local nameTxt = item.name or ""
+        row.text:SetWidth(frameWidth - (ICON_SIZE+10))
+        row.text:SetText(nameTxt)
+        if not row.text.SetMaxLines then
+            row.text:SetHeight(ITEM_HEIGHT - 5)
+        end
+        
+        row.iconBorder:SetPoint("LEFT", row, "LEFT", 0, 0)
+        row.text:SetPoint("LEFT", row.iconBorder, "RIGHT", 4, 0)
+        row.text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+        
+        row.itemID = item.itemID
+        row.itemName = item.name
+        row:Show()
+    end
+    
+    -- Скрываем неиспользуемые фреймы
+    for i = #rewardItems + 1, #rewardItemFrames do
+        rewardItemFrames[i]:Hide()
+    end
+    
+    rewardsVisibleCount = #rewardItems
+end
+
+local function SetupExtraRewards(q)
+    if not q.rewards then return end
+    
+    if not rewardExtraFS then
+        rewardExtraFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+    end
+    
+    local extraLines = {}
+    
+    if q.rewards.money and q.rewards.money > 0 then
+        local coinStr = GetCoinTextureString(q.rewards.money, 20)
+        table.insert(extraLines, "Вы также получите: " .. coinStr)
+    end
+    
+    if q.rewards.xp and q.rewards.xp > 0 then
+        table.insert(extraLines, "Опыт: " .. ((BreakUpLargeNumbers and BreakUpLargeNumbers(q.rewards.xp)) or q.rewards.xp))
+    end
+    
+    rewardExtraFS:SetSpacing(4)
+    rewardExtraFS:SetText(table.concat(extraLines, "\n"))
+end
+
+local function LayoutQuestDetails()
+    -- Начинаем с заголовка квеста
     local yOffset = -detailsTitle:GetStringHeight() - 5
-
+    
     -- Summary целей
-    if objectivesSummaryFS and objectivesSummaryFS:GetText() ~= "" then
+    if objectivesSummaryFS then
         objectivesSummaryFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-        yOffset = yOffset - objectivesSummaryFS:GetStringHeight() - 6
+        if objectivesSummaryFS:GetText() ~= "" then
+            yOffset = yOffset - objectivesSummaryFS:GetStringHeight() - 6
+        end
     end
-
-    -- Подробные цели (список)
-    if objectivesTextFS and objectivesTextFS:GetText() ~= "" then
+    
+    -- Подробные цели
+    if objectivesTextFS then
         objectivesTextFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-        yOffset = yOffset - objectivesTextFS:GetStringHeight()
+        if objectivesTextFS:GetText() ~= "" then
+            yOffset = yOffset - objectivesTextFS:GetStringHeight()
+        end
     end
-
-    -- Заголовок «Описание»
-    if descHeadingFS and descHeadingFS:GetText() ~= "" then
+    
+    -- Заголовок и текст описания
+    if descHeadingFS then
         descHeadingFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-        yOffset = yOffset - descHeadingFS:GetStringHeight() - 10
+        if descHeadingFS:GetText() ~= "" then
+            yOffset = yOffset - descHeadingFS:GetStringHeight() - 10
+        end
     end
-
-    -- Текст описания
-    if detailsFS and detailsFS:GetText() ~= "" then
+    
+    if detailsFS then
         detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-        yOffset = yOffset - detailsFS:GetStringHeight() - 10
+        if detailsFS:GetText() ~= "" then
+            yOffset = yOffset - detailsFS:GetStringHeight() - 10
+        end
     end
-
+    
+    -- Награды
     if rewardsHeadingFS and rewardsHeadingFS:GetText() ~= "" then
         rewardsHeadingFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
         yOffset = yOffset - rewardsHeadingFS:GetStringHeight() - 2
-
-        -- подпись выбора
-        if choiceLabelFS and choiceLabelFS:GetText() ~= "" then
-            choiceLabelFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-            yOffset = yOffset - choiceLabelFS:GetStringHeight() - 4
-        end
-
-        -- раскладка в две колонки
+        
+        -- Раскладка предметов в две колонки
         local colSpacing, rowSpacing = 4, 4
         local frameWidth = rightScrollFrame:GetWidth()
         local itemW = (frameWidth - colSpacing) / 2
         local currentIndex = 0
+        
         for _, row in ipairs(rewardItemFrames) do
             if row:IsShown() then
                 local col = currentIndex % 2
                 local rowIdx = math.floor(currentIndex / 2)
                 local xOff = col * (itemW + colSpacing)
                 local yOff = yOffset - rowIdx * (row:GetHeight() + rowSpacing)
-
+                
                 row:SetWidth(itemW)
                 row:SetPoint("TOPLEFT", rightContent, "TOPLEFT", xOff, yOff)
-
                 currentIndex = currentIndex + 1
             end
         end
-        -- смещаем yOffset на количество строк
+        
+        -- Смещаем yOffset на количество строк
         local rows = math.ceil(rewardsVisibleCount / 2)
         if rows > 0 then
             yOffset = yOffset - rows * (rewardItemFrames[1]:GetHeight() + rowSpacing)
         end
-
-        if rewardExtraFS and rewardExtraFS:GetText() ~= "" then
+        
+        -- Дополнительные награды
+        if rewardExtraFS then
             rewardExtraFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-            yOffset = yOffset - rewardExtraFS:GetStringHeight() - 4
+            if rewardExtraFS:GetText() ~= "" then
+                yOffset = yOffset - rewardExtraFS:GetStringHeight() - 4
+            end
         end
     end
-
+    
+    -- Устанавливаем общую высоту контента
     local totalHeight = -yOffset + 10
     rightContent:SetHeight(totalHeight)
     rightScrollFrame:SetVerticalScroll(0)
+end
+
+-- ============================================================================
+-- ОСНОВНАЯ ФУНКЦИЯ ОТОБРАЖЕНИЯ ДЕТАЛЕЙ КВЕСТА
+-- ============================================================================
+
+local function ShowQuestDetails(questID)
+    if not MQSH_QuestDB or not MQSH_QuestDB[questID] then return end
+    
+    local q = MQSH_QuestDB[questID]
+    
+    -- 1. Очищаем все элементы интерфейса
+    ClearQuestDetails()
+    
+    -- 2. Настраиваем заголовок квеста
+    SetupQuestTitle(questID, q)
+    
+    -- 3. Настраиваем цели квеста
+    SetupObjectivesSummary(q)
+    SetupDetailedObjectives(q)
+    
+    -- 4. Настраиваем описание
+    SetupDescription(q)
+    
+    -- 5. Настраиваем награды
+    SetupRewardItems(q)
+    SetupExtraRewards(q)
+    
+    -- 6. Раскладываем все элементы на экране
+    LayoutQuestDetails()
 end
 
 local function HighlightQuestButton(btn)
