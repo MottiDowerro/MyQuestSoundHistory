@@ -1,47 +1,36 @@
-local uiCreated = false
+-- QuestDetails.lua
+-- Модуль для отображения деталей квеста
 
--- Настройки отступов
-local OVERLAY_PADDING_LEFT_RIGHT = 5    -- Отступ от границ overlay
-local OVERLAY_PADDING_TOP = 30           -- Отступ сверху
-local OVERLAY_PADDING_BOTTOM = 10        -- Отступ снизу
-local WINDOW_SPACING = 4                 -- Расстояние между элементами
+local QuestDetails = {}
 
--- Настройки окон
-local TITLE_TOP_OFFSET = 5               -- Отступ заголовка
-
--- Отступы контента внутри окон
-local LEFT_WINDOW_PADDING_X = 6          -- Отступ по X в левом окне
-local LEFT_WINDOW_PADDING_Y = 3          -- Отступ по Y в левом окне
-local RIGHT_WINDOW_PADDING_X = 5         -- Отступ по X в правом окне
-local RIGHT_WINDOW_PADDING_Y = 7         -- Отступ по Y в правом окне
-
--- Настройки кнопок
-local BUTTON_HEIGHT = 17                 -- Высота кнопки
-local BUTTON_TEXT_PADDING = 5            -- Отступ текста по X
-local BUTTON_SPACING = 1                 -- Расстояние между кнопками
-
--- Переменные интерфейса
-local overlay
-local leftScrollFrame, leftContent
-local rightScrollFrame, rightContent, detailsFS, detailsTitle
+-- Вспомогательные переменные (будут передаваться через параметры или инициализироваться снаружи)
+local rewardItemFrames, objectiveItemFrames, rewardsVisibleCount, objectiveItemsVisibleCount
+local objectivesSummaryFS, objectivesTextFS, detailsFS, rewardsHeadingFS, rewardExtraFS, choiceLabelFS, descHeadingFS, detailsTitle
+local rightContent, rightScrollFrame, rightScrollbar
 local selectedButton
-local objectivesSummaryFS, objectivesTextFS
-local rewardsHeadingFS, rewardsTextFS
-local descHeadingFS
-local rewardItemFrames = {}
-local choiceLabelFS, rewardExtraFS
-local rewardsVisibleCount = 0
-local leftScrollbar, rightScrollbar
 
--- Переменные для предметов-целей
-local objectiveItemFrames = {}
-local objectiveItemsVisibleCount = 0
-
--- Таблица пар скроллбаров для утилит
-local scrollPairs = {}
+-- Функции для инициализации переменных (чтобы не было глобальных зависимостей)
+function QuestDetails.InitVars(vars)
+    rewardItemFrames = vars.rewardItemFrames
+    objectiveItemFrames = vars.objectiveItemFrames
+    rewardsVisibleCount = vars.rewardsVisibleCount
+    objectiveItemsVisibleCount = vars.objectiveItemsVisibleCount
+    objectivesSummaryFS = vars.objectivesSummaryFS
+    objectivesTextFS = vars.objectivesTextFS
+    detailsFS = vars.detailsFS
+    rewardsHeadingFS = vars.rewardsHeadingFS
+    rewardExtraFS = vars.rewardExtraFS
+    choiceLabelFS = vars.choiceLabelFS
+    descHeadingFS = vars.descHeadingFS
+    detailsTitle = vars.detailsTitle
+    rightContent = vars.rightContent
+    rightScrollFrame = vars.rightScrollFrame
+    rightScrollbar = vars.rightScrollbar
+    selectedButton = vars.selectedButton
+end
 
 -- Вспомогательные функции для отображения деталей квеста
-local function ClearQuestDetails()
+QuestDetails.ClearQuestDetails = function()
     if objectivesSummaryFS then objectivesSummaryFS:SetText("") end
     if objectivesTextFS then objectivesTextFS:SetText("") end
     if detailsFS then detailsFS:SetText("") end
@@ -57,7 +46,7 @@ local function ClearQuestDetails()
     objectiveItemsVisibleCount = 0
 end
 
-local function SetupQuestTitle(questID, q)
+QuestDetails.SetupQuestTitle = function(questID, q)
     local gold = "|cffFFD100"
     local reset = "|r"
     local title = q.title or ("ID " .. tostring(questID))
@@ -67,7 +56,7 @@ local function SetupQuestTitle(questID, q)
     end
 end
 
-local function SetupObjectivesSummary(q)
+QuestDetails.SetupObjectivesSummary = function(q)
     local white = "|cffffffff"
     local reset = "|r"
     
@@ -83,7 +72,7 @@ local function SetupObjectivesSummary(q)
     end
 end
 
-local function SetupDetailedObjectives(q)
+QuestDetails.SetupDetailedObjectives = function(q)
     local grey = "|cffAAAAAA"
     local reset = "|r"
     
@@ -124,7 +113,7 @@ local function SetupDetailedObjectives(q)
     end
 end
 
-local function SetupDescription(q)
+QuestDetails.SetupDescription = function(q)
     local white = "|cffffffff"
     local gold = "|cffFFD100"
     local reset = "|r"
@@ -150,7 +139,7 @@ local function SetupDescription(q)
     end
 end
 
-local function CreateRewardItemFrame(index)
+QuestDetails.CreateRewardItemFrame = function(index)
     local ICON_SIZE = 40
     local ITEM_HEIGHT = ICON_SIZE + 4
     
@@ -174,7 +163,7 @@ local function CreateRewardItemFrame(index)
     return row
 end
 
-local function CreateObjectiveItemFrame(index)
+QuestDetails.CreateObjectiveItemFrame = function(index)
     local ICON_SIZE = 40
     local ITEM_HEIGHT = ICON_SIZE + 4
     
@@ -209,7 +198,7 @@ local function CreateObjectiveItemFrame(index)
     return row
 end
 
-local function SetupRewardItemTooltip(row)
+QuestDetails.SetupRewardItemTooltip = function(row)
     row:SetScript("OnEnter", function(self)
         if not self.highlight then
             self.highlight = self:CreateTexture(nil, "BACKGROUND")
@@ -246,7 +235,7 @@ local function SetupRewardItemTooltip(row)
     end)
 end
 
-local function SetupObjectiveItemTooltip(row)
+QuestDetails.SetupObjectiveItemTooltip = function(row)
     row:SetScript("OnEnter", function(self)
         if not self.highlight then
             self.highlight = self:CreateTexture(nil, "BACKGROUND")
@@ -283,7 +272,7 @@ local function SetupObjectiveItemTooltip(row)
     end)
 end
 
-local function SetupRewardItems(q)
+QuestDetails.SetupRewardItems = function(q)
     if not q.rewards then return end
     
     local itemsCount = q.rewards.items and #q.rewards.items or 0
@@ -320,9 +309,9 @@ local function SetupRewardItems(q)
     for i, item in ipairs(rewardItems) do
         local row = rewardItemFrames[i]
         if not row then
-            row = CreateRewardItemFrame(i)
+            row = QuestDetails.CreateRewardItemFrame(i)
             rewardItemFrames[i] = row
-            SetupRewardItemTooltip(row)
+            QuestDetails.SetupRewardItemTooltip(row)
         end
         
         row:SetWidth(frameWidth)
@@ -366,7 +355,7 @@ local function SetupRewardItems(q)
     rewardsVisibleCount = #rewardItems
 end
 
-local function SetupExtraRewards(q)
+QuestDetails.SetupExtraRewards = function(q)
     if not q.rewards then return end
     
     if not rewardExtraFS then
@@ -388,7 +377,7 @@ local function SetupExtraRewards(q)
     rewardExtraFS:SetText(table.concat(extraLines, "\n"))
 end
 
-local function SetupObjectiveItems(q)
+QuestDetails.SetupObjectiveItems = function(q)
     if not q.objectiveItems or #q.objectiveItems == 0 then return end
     
     local ICON_SIZE = 40
@@ -398,9 +387,9 @@ local function SetupObjectiveItems(q)
     for i, item in ipairs(q.objectiveItems) do
         local row = objectiveItemFrames[i]
         if not row then
-            row = CreateObjectiveItemFrame(i)
+            row = QuestDetails.CreateObjectiveItemFrame(i)
             objectiveItemFrames[i] = row
-            SetupObjectiveItemTooltip(row)
+            QuestDetails.SetupObjectiveItemTooltip(row)
         end
         
         row:SetWidth(frameWidth)
@@ -454,7 +443,7 @@ local function SetupObjectiveItems(q)
     objectiveItemsVisibleCount = #q.objectiveItems
 end
 
-local function LayoutQuestDetails()
+QuestDetails.LayoutQuestDetails = function()
     local yOffset = -detailsTitle:GetStringHeight() - 5
     
     if objectivesSummaryFS then
@@ -564,28 +553,23 @@ local function LayoutQuestDetails()
     ScrollBarUtils.UpdateScrollBar(rightScrollFrame, rightScrollbar)
 end
 
-local function ShowQuestDetails(questID)
+QuestDetails.ShowQuestDetails = function(questID)
     if not MQSH_QuestDB or not MQSH_QuestDB[questID] then return end
     
     local q = MQSH_QuestDB[questID]
     
-    ClearQuestDetails()
-    
-    SetupQuestTitle(questID, q)
-    
-    SetupObjectivesSummary(q)
-    SetupDetailedObjectives(q)
-    
-    SetupDescription(q)
-    
-    SetupRewardItems(q)
-    SetupExtraRewards(q)
-    SetupObjectiveItems(q)
-    
-    LayoutQuestDetails()
+    QuestDetails.ClearQuestDetails()
+    QuestDetails.SetupQuestTitle(questID, q)
+    QuestDetails.SetupObjectivesSummary(q)
+    QuestDetails.SetupDetailedObjectives(q)
+    QuestDetails.SetupDescription(q)
+    QuestDetails.SetupRewardItems(q)
+    QuestDetails.SetupExtraRewards(q)
+    QuestDetails.SetupObjectiveItems(q)
+    QuestDetails.LayoutQuestDetails()
 end
 
-local function HighlightQuestButton(btn)
+QuestDetails.HighlightQuestButton = function(btn)
     if selectedButton and selectedButton.selTexture then
         selectedButton.selTexture:Hide()
     end
@@ -595,225 +579,5 @@ local function HighlightQuestButton(btn)
     end
 end
 
-local function BuildQuestList()
-    if not leftContent then return end
-
-    if leftContent.buttons then
-        for _, btn in ipairs(leftContent.buttons) do
-            btn:Hide()
-        end
-    else
-        leftContent.buttons = {}
-    end
-
-    local questIDs = {}
-    if MQSH_QuestDB then
-        for qID in pairs(MQSH_QuestDB) do
-            table.insert(questIDs, qID)
-        end
-    end
-
-    local width = leftScrollFrame:GetWidth() - 5
-    local reset = "|r"
-
-    for index, qID in ipairs(questIDs) do
-        local data = MQSH_QuestDB[qID]
-        local btn = leftContent.buttons[index]
-        if not btn then
-            btn = CreateFrame("Button", nil, leftContent)
-            leftContent.buttons[index] = btn
-
-            btn.text = btn:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-            btn.text:SetJustifyH("LEFT")
-            btn.text:SetTextColor(1, 1, 1)
-
-            btn.text:SetPoint("TOPLEFT", btn, "TOPLEFT", BUTTON_TEXT_PADDING, 0)
-            btn.text:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -BUTTON_TEXT_PADDING, 0)
-
-            btn.text.xOffset = BUTTON_TEXT_PADDING
-            btn.text.yOffset = 0
-
-            btn.selTexture = btn:CreateTexture(nil, "BACKGROUND")
-            btn.selTexture:SetAllPoints(btn)
-            btn.selTexture:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-            btn.selTexture:SetBlendMode("ADD")
-            btn.selTexture:Hide()
-        end
-
-        btn.questID = qID
-        btn:SetHeight(BUTTON_HEIGHT)
-
-        btn:SetPoint("TOPLEFT", leftContent, "TOPLEFT", 0, -(index - 1) * (BUTTON_HEIGHT + BUTTON_SPACING))
-        btn:SetPoint("TOPRIGHT", leftContent, "TOPRIGHT", 0, -(index - 1) * (BUTTON_HEIGHT + BUTTON_SPACING))
-
-        local title = data.title or ("ID " .. tostring(qID))
-        local level = data.level or "??"
-        local color
-        if type(level) == "number" then
-            color = GetQuestDifficultyColor(level)
-        else
-            color = { r = 1, g = 0, b = 0 }
-        end
-        btn.text:SetTextColor(color.r, color.g, color.b)
-        btn.text:SetText(string.format("[%s] %s%s", level, title, reset))
-
-        btn:SetScript("OnMouseDown", function(self)
-            self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset + 2, self.text.yOffset - 2)
-            self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset + 2, self.text.yOffset - 2)
-        end)
-
-        btn:SetScript("OnMouseUp", function(self)
-            self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset, self.text.yOffset)
-            self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset, self.text.yOffset)
-        end)
-
-        btn:SetScript("OnClick", function(self)
-            HighlightQuestButton(self)
-            ShowQuestDetails(self.questID)
-        end)
-
-        btn:SetScript("OnEnter", function(self)
-            self.text:SetTextColor(1, 1, 1)
-        end)
-
-        btn:SetScript("OnLeave", function(self)
-            self.text:SetTextColor(color.r, color.g, color.b)
-        end)
-
-        btn:Show()
-    end
-
-    for i = #questIDs + 1, #leftContent.buttons do
-        leftContent.buttons[i]:Hide()
-    end
-
-    local totalHeight = #questIDs * BUTTON_HEIGHT
-    if #questIDs > 1 then
-        totalHeight = totalHeight + (#questIDs - 1) * BUTTON_SPACING
-    end
-    leftContent:SetHeight(totalHeight)
-    leftScrollFrame:SetVerticalScroll(0)
-    
-    ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
-
-    if #questIDs > 0 and (not selectedButton or not selectedButton:IsShown()) then
-        local firstBtn = leftContent.buttons[1]
-        if firstBtn then
-            HighlightQuestButton(firstBtn)
-            ShowQuestDetails(firstBtn.questID)
-        end
-    end
-end
-
-local function TryCreateQuestListUI()
-    if uiCreated or not QuestLogFrame then return end
-
-    local showBtn = CreateFrame("Button", "MQSH_ShowListButton", QuestLogFrame, "UIPanelButtonTemplate")
-    showBtn:SetSize(80, 22)
-    showBtn:SetText("История")
-    showBtn:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -150, -30)
-
-    overlay = CreateFrame("Frame", "MQSH_ListOverlay", QuestLogFrame)
-    overlay:SetPoint("TOPLEFT", QuestLogFrame, "TOPLEFT", 11, -12)
-    overlay:SetPoint("BOTTOMRIGHT", QuestLogFrame, "BOTTOMRIGHT", -1, 11)
-    ScrollBarUtils.SetBackdrop(overlay, {0.05, 0.05, 0.05, 0.85}, {0, 0, 0, 0.95})
-    overlay:SetFrameStrata("DIALOG")
-    overlay:Hide()
-
-    overlay:EnableMouse(true)
-
-    local closeBtn = CreateFrame("Button", nil, overlay, "UIPanelCloseButton")
-    closeBtn:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", 3, 3)
-
-    local overlayWidth = QuestLogFrame:GetWidth() - 12
-    local overlayHeight = QuestLogFrame:GetHeight() - 23
-    
-    local totalFixedWidth = OVERLAY_PADDING_LEFT_RIGHT + ScrollBarUtils.SCROLLBAR_WIDTH + WINDOW_SPACING + ScrollBarUtils.SCROLLBAR_WIDTH + OVERLAY_PADDING_LEFT_RIGHT
-    local totalSpacing = WINDOW_SPACING * 3
-    local availableWidth = overlayWidth - totalFixedWidth - totalSpacing
-    local windowWidth = availableWidth / 2
-    
-    local windowHeight = overlayHeight - OVERLAY_PADDING_TOP - OVERLAY_PADDING_BOTTOM
-    local rightScrollbarHeight = windowHeight - WINDOW_SPACING * 2
-    
-    local leftWindowX = OVERLAY_PADDING_LEFT_RIGHT
-    local leftScrollbarX = leftWindowX + windowWidth + WINDOW_SPACING
-    local rightWindowX = leftScrollbarX + ScrollBarUtils.SCROLLBAR_WIDTH + WINDOW_SPACING
-    local rightScrollbarX = rightWindowX + windowWidth + WINDOW_SPACING
-    
-    local elementY = -OVERLAY_PADDING_TOP
-
-    local leftWindow = CreateFrame("Frame", nil, overlay)
-    leftWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", leftWindowX, elementY)
-    leftWindow:SetSize(windowWidth, windowHeight)
-    ScrollBarUtils.SetBackdrop(leftWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
-
-    local leftTitle = ScrollBarUtils.CreateFS(overlay, "GameFontNormal")
-    leftTitle:SetPoint("BOTTOM", leftWindow, "TOP", 0, 5)
-    leftTitle:SetJustifyH("CENTER")
-    leftTitle:SetText("|cffFFD100Квесты|r")
-
-    -- Создаем левый ScrollFrame и скроллбар
-    leftScrollFrame, leftContent = ScrollBarUtils.CreateScrollFrame(leftWindow, LEFT_WINDOW_PADDING_X, LEFT_WINDOW_PADDING_Y)
-    leftScrollbar = ScrollBarUtils.CreateScrollBar(overlay, leftScrollFrame, leftWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, BUTTON_HEIGHT + BUTTON_SPACING)
-
-    -- Создаем правый ScrollFrame и скроллбар
-    local rightWindow = CreateFrame("Frame", nil, overlay)
-    rightWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", rightWindowX, elementY)
-    rightWindow:SetSize(windowWidth, windowHeight)
-    ScrollBarUtils.SetBackdrop(rightWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
-
-    rightScrollFrame, rightContent = ScrollBarUtils.CreateScrollFrame(rightWindow, RIGHT_WINDOW_PADDING_X, RIGHT_WINDOW_PADDING_Y)
-    rightScrollbar = ScrollBarUtils.CreateScrollBar(overlay, rightScrollFrame, rightWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, 20)
-
-    -- Инициализируем таблицу пар скроллбаров
-    scrollPairs = {
-        {scrollFrame = leftScrollFrame, scrollbar = leftScrollbar},
-        {scrollFrame = rightScrollFrame, scrollbar = rightScrollbar}
-    }
-
-    detailsTitle = ScrollBarUtils.CreateFS(rightContent, "GameFontNormalHuge")
-    ScrollBarUtils.RemoveFontOutline(detailsTitle)
-    detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
-    detailsTitle:SetJustifyH("LEFT")
-
-    detailsFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
-    detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -25)
-
-    showBtn:SetScript("OnClick", function()
-        if overlay:IsShown() then
-            overlay:Hide()
-            ScrollBarUtils.ResetScrollBars(scrollPairs)
-        else
-            overlay:Show()
-        end
-    end)
-
-    hooksecurefunc(QuestLogFrame, "Hide", function()
-        overlay:Hide()
-        ScrollBarUtils.ResetScrollBars(scrollPairs)
-    end)
-
-    overlay:SetScript("OnShow", function()
-        BuildQuestList()
-        ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
-    end)
-
-    -- Инициализируем скроллбары
-    ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
-
-    uiCreated = true
-end
-
-local loader = CreateFrame("Frame")
-loader:RegisterEvent("PLAYER_LOGIN")
-loader:RegisterEvent("ADDON_LOADED")
-loader:SetScript("OnEvent", function(_, event, arg1)
-    if event == "PLAYER_LOGIN" then
-        TryCreateQuestListUI()
-    elseif event == "ADDON_LOADED" and arg1 == "Blizzard_QuestLog" then
-        TryCreateQuestListUI()
-    end
-end)
-
-_G.QuestListOverlay_TryInit = TryCreateQuestListUI
+-- Экспортируем модуль в глобальную область
+_G.QuestDetails = QuestDetails 
