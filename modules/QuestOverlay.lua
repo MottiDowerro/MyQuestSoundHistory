@@ -93,7 +93,7 @@ local function TryCreateQuestUI()
     ScrollBarUtils.SetBackdrop(rightWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
 
     rightScrollFrame, rightContent = ScrollBarUtils.CreateScrollFrame(rightWindow, RIGHT_WINDOW_PADDING_X, RIGHT_WINDOW_PADDING_Y)
-    rightScrollbar = ScrollBarUtils.CreateScrollBar(overlay, rightScrollFrame, rightWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, 20)
+    rightScrollbar = ScrollBarUtils.CreateScrollBar(overlay, rightScrollFrame, rightWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, 60)
 
     -- Инициализируем таблицу пар скроллбаров
     scrollPairs = {
@@ -158,6 +158,15 @@ local function TryCreateQuestUI()
     overlay:SetScript("OnShow", function()
         QuestList.BuildQuestList()
         ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
+        -- Принудительно сбрасываем позицию скроллбаров в начало
+        for _, pair in ipairs(scrollPairs) do
+            if pair.scrollFrame then 
+                pair.scrollFrame:SetVerticalScroll(0) 
+            end
+            if pair.scrollbar then 
+                pair.scrollbar:SetValue(0) 
+            end
+        end
     end)
 
     -- Инициализируем скроллбары

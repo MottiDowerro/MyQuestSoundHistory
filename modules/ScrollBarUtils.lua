@@ -26,6 +26,8 @@ function ScrollBarUtils.UpdateScrollBar(scrollFrame, scrollbar)
     -- Принудительно обновляем ползунок
     if maxScroll <= 0 then
         scrollbar:SetValue(0)
+        -- Дополнительно сбрасываем позицию прокрутки
+        scrollFrame:SetVerticalScroll(0)
     end
 end
 
@@ -43,7 +45,8 @@ function ScrollBarUtils.ResetScrollBars(scrollPairs)
             pair.scrollFrame:SetVerticalScroll(0) 
         end
         if pair.scrollbar then 
-            pair.scrollbar:SetValue(0) 
+            pair.scrollbar:SetMinMaxValues(0, 0)
+            pair.scrollbar:SetValue(0)
         end
     end
 end

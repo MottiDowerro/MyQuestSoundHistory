@@ -151,7 +151,7 @@ QuestList.CreateLeftWindow = function(overlay, windowWidth, windowHeight, leftWi
 
     -- Создаем левый ScrollFrame и скроллбар
     local leftScrollFrame, leftContent = ScrollBarUtils.CreateScrollFrame(leftWindow, LEFT_WINDOW_PADDING_X, LEFT_WINDOW_PADDING_Y)
-    local leftScrollbar = ScrollBarUtils.CreateScrollBar(overlay, leftScrollFrame, leftWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, BUTTON_HEIGHT + BUTTON_SPACING)
+    local leftScrollbar = ScrollBarUtils.CreateScrollBar(overlay, leftScrollFrame, leftWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, (BUTTON_HEIGHT + BUTTON_SPACING) * 2)
     
     return leftWindow, leftScrollFrame, leftContent, leftScrollbar, leftTitle
 end
