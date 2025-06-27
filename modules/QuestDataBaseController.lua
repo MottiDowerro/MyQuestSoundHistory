@@ -32,12 +32,49 @@ local function GetQuestIDAndData(questLogIndex)
 
             -- Получение целей квеста
             local objectives = {}
+            local objectiveItems = {} -- Новый массив для предметов-целей
             local numObjectives = GetNumQuestLeaderBoards()
             if numObjectives and numObjectives > 0 then
                 for i = 1, numObjectives do
-                    local desc = select(1, GetQuestLogLeaderBoard(i))
+                    local desc, type = select(1, GetQuestLogLeaderBoard(i))
                     if desc then
                         table.insert(objectives, desc)
+                        
+                        -- Проверяем, является ли цель предметом
+                        if type == "item" then
+                            -- Пытаемся извлечь информацию о предмете из описания
+                            local itemName, itemCount, itemID
+                            
+                            -- Парсим описание цели для извлечения информации о предмете
+                            -- Пример: "Добыть банданы: 0/12" или "Собрать банданы (0/12)"
+                            local itemPattern = "([^:]+):%s*(%d+)/(%d+)"
+                            local itemNameMatch, currentCount, totalCount = desc:match(itemPattern)
+                            
+                            if itemNameMatch then
+                                itemName = itemNameMatch:trim()
+                                itemCount = tonumber(totalCount)
+                                
+                                -- Пытаемся найти itemID по имени предмета
+                                if itemName then
+                                    local _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, itemID = GetItemInfo(itemName)
+                                    if not itemID then
+                                        -- Если не удалось найти по имени, пробуем через GetItemInfo
+                                        local itemLink = select(2, GetItemInfo(itemName))
+                                        if itemLink then
+                                            itemID = tonumber(itemLink:match("item:(%d+)"))
+                                        end
+                                    end
+                                end
+                                
+                                if itemName and itemCount then
+                                    table.insert(objectiveItems, {
+                                        name = itemName,
+                                        count = itemCount,
+                                        itemID = itemID
+                                    })
+                                end
+                            end
+                        end
                     end
                 end
             end
@@ -85,6 +122,7 @@ local function GetQuestIDAndData(questLogIndex)
                 description     = description,
                 objectivesText  = objectivesText,
                 objectives      = objectives,
+                objectiveItems  = objectiveItems, -- Добавляем предметы-цели
                 rewards         = rewards,
             }
         end

@@ -34,6 +34,10 @@ local choiceLabelFS, rewardExtraFS
 local rewardsVisibleCount = 0
 local leftScrollbar, rightScrollbar
 
+-- Переменные для предметов-целей
+local objectiveItemFrames = {}
+local objectiveItemsVisibleCount = 0
+
 -- Функции для скроллбаров
 local function UpdateScrollBar(scrollFrame, scrollbar)
     if not scrollFrame or not scrollbar then return end
@@ -105,6 +109,10 @@ local function ClearQuestDetails()
     
     for _, f in ipairs(rewardItemFrames) do f:Hide() end
     rewardsVisibleCount = 0
+    
+    -- Очистка предметов-целей
+    for _, f in ipairs(objectiveItemFrames) do f:Hide() end
+    objectiveItemsVisibleCount = 0
 end
 
 local function SetupQuestTitle(questID, q)
@@ -144,8 +152,29 @@ local function SetupDetailedObjectives(q)
         end
 
         local objLines = {}
+        local objectiveItems = q.objectiveItems or {}
+        
+        -- Создаем словарь предметов-целей для быстрого поиска
+        local itemObjectives = {}
+        for _, item in ipairs(objectiveItems) do
+            itemObjectives[item.name] = item
+        end
+        
         for _, obj in ipairs(q.objectives) do
-            table.insert(objLines, grey .. obj .. reset .. "\n")
+            -- Проверяем, является ли эта цель предметом
+            local isItemObjective = false
+            for itemName, itemData in pairs(itemObjectives) do
+                if obj:find(itemName, 1, true) then -- Точное совпадение имени предмета
+                    isItemObjective = true
+                    break
+                end
+            end
+            
+            if not isItemObjective then
+                -- Если это не предмет, добавляем как обычный текст
+                table.insert(objLines, grey .. obj .. reset .. "\n")
+            end
+            -- Если это предмет, пропускаем - он будет отображен отдельно
         end
         objectivesTextFS:SetText(table.concat(objLines, ""))
     elseif objectivesTextFS then
@@ -203,7 +232,79 @@ local function CreateRewardItemFrame(index)
     return row
 end
 
+local function CreateObjectiveItemFrame(index)
+    local ICON_SIZE = 40
+    local ITEM_HEIGHT = ICON_SIZE + 4
+    
+    local row = CreateFrame("Frame", nil, rightContent)
+    SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
+    row:EnableMouse(true)
+
+    row.iconBorder = CreateFrame("Frame", nil, row)
+    SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
+    row.iconBorder:SetSize(ICON_SIZE+4, ICON_SIZE+4)
+
+    row.icon = row.iconBorder:CreateTexture(nil, "ARTWORK")
+    row.icon:SetPoint("CENTER")
+    row.icon:SetSize(ICON_SIZE, ICON_SIZE)
+    row.icon:SetTexCoord(5/64,59/64,5/64,59/64)
+
+    row.text = CreateFS(row, "GameFontHighlight")
+    row.text:SetJustifyH("LEFT")
+    row.text:SetJustifyV("MIDDLE")
+    
+    -- Добавляем текст количества на иконку
+    row.countText = row.iconBorder:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    row.countText:SetJustifyH("RIGHT")
+    row.countText:SetJustifyV("BOTTOM")
+    row.countText:SetPoint("BOTTOMRIGHT", row.iconBorder, "BOTTOMRIGHT", -2, 2)
+    row.countText:SetTextColor(1, 1, 1)
+    
+    -- Уменьшаем размер шрифта
+    local fontFile, fontSize = row.countText:GetFont()
+    row.countText:SetFont(fontFile, fontSize, "OUTLINE")
+    
+    return row
+end
+
 local function SetupRewardItemTooltip(row)
+    row:SetScript("OnEnter", function(self)
+        if not self.highlight then
+            self.highlight = self:CreateTexture(nil, "BACKGROUND")
+            self.highlight:SetAllPoints(self)
+            self.highlight:SetTexture("Interface\\Buttons\\WHITE8x8")
+            self.highlight:SetAlpha(0.4)
+            self.highlight:SetBlendMode("ADD")
+        end
+        self.highlight:Show()
+
+        if self.itemID then
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            if GameTooltip.SetItemByID then
+                GameTooltip:SetItemByID(self.itemID)
+            else
+                GameTooltip:SetHyperlink("item:" .. self.itemID)
+            end
+            GameTooltip:Show()
+        elseif self.itemName then
+            local _, name = GetItemInfo(self.itemName)
+            if name then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetHyperlink(name)
+                GameTooltip:Show()
+            end
+        end
+    end)
+
+    row:SetScript("OnLeave", function(self)
+        if self.highlight then
+            self.highlight:Hide()
+        end
+        GameTooltip:Hide()
+    end)
+end
+
+local function SetupObjectiveItemTooltip(row)
     row:SetScript("OnEnter", function(self)
         if not self.highlight then
             self.highlight = self:CreateTexture(nil, "BACKGROUND")
@@ -345,6 +446,72 @@ local function SetupExtraRewards(q)
     rewardExtraFS:SetText(table.concat(extraLines, "\n"))
 end
 
+local function SetupObjectiveItems(q)
+    if not q.objectiveItems or #q.objectiveItems == 0 then return end
+    
+    local ICON_SIZE = 40
+    local ITEM_HEIGHT = ICON_SIZE + 4
+    local frameWidth = rightScrollFrame:GetWidth()
+    
+    for i, item in ipairs(q.objectiveItems) do
+        local row = objectiveItemFrames[i]
+        if not row then
+            row = CreateObjectiveItemFrame(i)
+            objectiveItemFrames[i] = row
+            SetupObjectiveItemTooltip(row)
+        end
+        
+        row:SetWidth(frameWidth)
+        row:SetHeight(ITEM_HEIGHT)
+        
+        -- Получаем текстуру предмета
+        local texture = "Interface\\Icons\\INV_Misc_QuestionMark"
+        if item.itemID then
+            local itemTexture = GetItemIcon(item.itemID)
+            if itemTexture then
+                texture = itemTexture
+            end
+        elseif item.name then
+            local _, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo(item.name)
+            if itemTexture then
+                texture = itemTexture
+            end
+        end
+        row.icon:SetTexture(texture)
+        
+        -- Формируем текст с количеством
+        local nameTxt = item.name or ""
+        
+        -- Устанавливаем количество на иконку
+        if item.count then
+            row.countText:SetText(tostring(item.count))
+            row.countText:Show()
+        else
+            row.countText:Hide()
+        end
+        
+        row.text:SetWidth(frameWidth - (ICON_SIZE+10))
+        row.text:SetText("|cffffffff" .. nameTxt .. "|r")
+        if not row.text.SetMaxLines then
+            row.text:SetHeight(ITEM_HEIGHT - 5)
+        end
+        
+        row.iconBorder:SetPoint("LEFT", row, "LEFT", 0, 0)
+        row.text:SetPoint("LEFT", row.iconBorder, "RIGHT", 4, 0)
+        row.text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+        
+        row.itemID = item.itemID
+        row.itemName = item.name
+        row:Show()
+    end
+    
+    for i = #q.objectiveItems + 1, #objectiveItemFrames do
+        objectiveItemFrames[i]:Hide()
+    end
+    
+    objectiveItemsVisibleCount = #q.objectiveItems
+end
+
 local function LayoutQuestDetails()
     local yOffset = -detailsTitle:GetStringHeight() - 5
     
@@ -362,10 +529,47 @@ local function LayoutQuestDetails()
         end
     end
     
+    -- Размещение предметов-целей сразу после текстовых целей
+    if objectiveItemsVisibleCount > 0 then
+        yOffset = yOffset - 8 -- Дополнительный отступ перед предметами-целями
+        
+        local colSpacing, rowSpacing = 4, 4
+        local frameWidth = rightScrollFrame:GetWidth()
+        local itemW = (frameWidth - colSpacing) / 2
+        local currentIndex = 0
+        
+        for _, row in ipairs(objectiveItemFrames) do
+            if row:IsShown() then
+                local col = currentIndex % 2
+                local rowIdx = math.floor(currentIndex / 2)
+                local xOff = col * (itemW + colSpacing)
+                local yOff = yOffset - rowIdx * (row:GetHeight() + rowSpacing)
+                
+                row:SetWidth(itemW)
+                row:SetPoint("TOPLEFT", rightContent, "TOPLEFT", xOff, yOff)
+                currentIndex = currentIndex + 1
+            end
+        end
+        
+        local rows = math.ceil(objectiveItemsVisibleCount / 2)
+        if rows > 0 then
+            yOffset = yOffset - rows * (objectiveItemFrames[1]:GetHeight() + rowSpacing)
+        end
+    end
+    
+    -- Дополнительный отступ перед описанием, если нет серых целей и предметов
+    local objectivesText = objectivesTextFS and objectivesTextFS:GetText()
+    local hasTextObjectives = objectivesText and objectivesText ~= ""
+    local hasObjectiveItems = objectiveItemsVisibleCount > 0
+    
+    if not hasTextObjectives and not hasObjectiveItems then
+        yOffset = yOffset - 6
+    end
+    
     if descHeadingFS then
         descHeadingFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
         if descHeadingFS:GetText() ~= "" then
-            yOffset = yOffset - descHeadingFS:GetStringHeight() - 10
+            yOffset = yOffset - descHeadingFS:GetStringHeight() - 6
         end
     end
     
@@ -434,6 +638,7 @@ local function ShowQuestDetails(questID)
     
     SetupRewardItems(q)
     SetupExtraRewards(q)
+    SetupObjectiveItems(q)
     
     LayoutQuestDetails()
 end
@@ -465,13 +670,6 @@ local function BuildQuestList()
             table.insert(questIDs, qID)
         end
     end
-    table.sort(questIDs, function(a, b)
-        local qa, qb = MQSH_QuestDB[a], MQSH_QuestDB[b]
-        if qa and qb then
-            return (qa.addedAt or 0) > (qb.addedAt or 0)
-        end
-        return a < b
-    end)
 
     local width = leftScrollFrame:GetWidth() - 5
     local reset = "|r"
@@ -583,7 +781,7 @@ local function TryCreateQuestListUI()
     overlay:EnableMouse(true)
 
     local closeBtn = CreateFrame("Button", nil, overlay, "UIPanelCloseButton")
-    closeBtn:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", -2, -2)
+    closeBtn:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", 3, 3)
 
     local overlayWidth = QuestLogFrame:GetWidth() - 12
     local overlayHeight = QuestLogFrame:GetHeight() - 23
