@@ -13,8 +13,6 @@ ScrollBarUtils.SCROLLBAR_WIDTH = 16               -- Ширина скроллб
 -- ============================================================================
 
 --- Обновляет скроллбар на основе содержимого ScrollFrame
---- @param scrollFrame Frame - ScrollFrame для обновления
---- @param scrollbar Slider - Скроллбар для обновления
 function ScrollBarUtils.UpdateScrollBar(scrollFrame, scrollbar)
     if not scrollFrame or not scrollbar then return end
     
@@ -32,7 +30,6 @@ function ScrollBarUtils.UpdateScrollBar(scrollFrame, scrollbar)
 end
 
 --- Обновляет все скроллбары в списке
---- @param scrollPairs table - Таблица пар {scrollFrame, scrollbar}
 function ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
     for _, pair in ipairs(scrollPairs) do
         ScrollBarUtils.UpdateScrollBar(pair.scrollFrame, pair.scrollbar)
@@ -40,7 +37,6 @@ function ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
 end
 
 --- Сбрасывает позицию скроллбаров
---- @param scrollPairs table - Таблица пар {scrollFrame, scrollbar}
 function ScrollBarUtils.ResetScrollBars(scrollPairs)
     for _, pair in ipairs(scrollPairs) do
         if pair.scrollFrame then 
@@ -53,13 +49,6 @@ function ScrollBarUtils.ResetScrollBars(scrollPairs)
 end
 
 --- Создает скроллбар для ScrollFrame
---- @param parent Frame - Родительский фрейм
---- @param scrollFrame Frame - ScrollFrame
---- @param anchorFrame Frame - Фрейм для привязки
---- @param spacing number - Расстояние от anchorFrame
---- @param width number - Ширина скроллбара
---- @param scrollStep number - Шаг прокрутки для колесика мыши
---- @return Slider scrollbar - Созданный скроллбар
 function ScrollBarUtils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacing, width, scrollStep)
     local scrollbar = CreateFrame("Slider", nil, parent, "UIPanelScrollBarTemplate")
     scrollbar:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", spacing, -14)
@@ -89,11 +78,6 @@ function ScrollBarUtils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacin
 end
 
 --- Создает ScrollFrame с контентом
---- @param parent Frame - Родительский фрейм
---- @param paddingX number - Отступ по X
---- @param paddingY number - Отступ по Y
---- @return Frame scrollFrame - Созданный ScrollFrame
---- @return Frame content - Созданный контентный фрейм
 function ScrollBarUtils.CreateScrollFrame(parent, paddingX, paddingY)
     local scrollFrame = CreateFrame("ScrollFrame", nil, parent)
     scrollFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", paddingX, -paddingY)
@@ -109,11 +93,6 @@ end
 -- ============================================================================
 -- Общие утилиты
 -- ============================================================================
-
---- Устанавливает фон для фрейма
---- @param frame Frame - Фрейм для установки фона
---- @param color table - Цвет фона {r, g, b, a}
---- @param borderColor table - Цвет границы {r, g, b, a}
 function ScrollBarUtils.SetBackdrop(frame, color, borderColor)
     frame:SetBackdrop({
         bgFile   = "Interface\\Buttons\\WHITE8x8",
@@ -128,10 +107,6 @@ function ScrollBarUtils.SetBackdrop(frame, color, borderColor)
 end
 
 --- Создает FontString
---- @param parent Frame - Родительский фрейм
---- @param template string - Шаблон шрифта
---- @param width number - Ширина текста (опционально)
---- @return FontString fs - Созданный FontString
 function ScrollBarUtils.CreateFS(parent, template, width)
     local fs = parent:CreateFontString(nil, "ARTWORK", template or "GameFontHighlight")
     fs:SetJustifyH("LEFT")
@@ -144,16 +119,24 @@ function ScrollBarUtils.CreateFS(parent, template, width)
 end
 
 --- Убирает контур шрифта
---- @param fs FontString - FontString для изменения
 function ScrollBarUtils.RemoveFontOutline(fs)
+    if not fs or type(fs) ~= "table" or not fs.GetFont then
+        return -- Если объект не является FontString, просто выходим
+    end
     local fontFile, fontSize = fs:GetFont()
     if fontFile then
         fs:SetFont(fontFile, fontSize, "")
     end
 end
 
--- ============================================================================
--- Экспорт
--- ============================================================================
+function ScrollBarUtils.AddFontOutline(fs)
+    if not fs or type(fs) ~= "table" or not fs.GetFont then
+        return -- Если объект не является FontString, просто выходим
+    end
+    local fontFile, fontSize = fs:GetFont()
+    if fontFile then
+        fs:SetFont(fontFile, fontSize, "OUTLINE")
+    end
+end
 
 _G.ScrollBarUtils = ScrollBarUtils 

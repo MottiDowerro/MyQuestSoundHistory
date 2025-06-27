@@ -139,7 +139,57 @@ QuestDetails.SetupDescription = function(q)
     end
 end
 
-QuestDetails.CreateRewardItemFrame = function(index)
+-- Универсальные функции для работы с предметами
+QuestDetails.GetItemTexture = function(item)
+    local texture = "Interface\\Icons\\INV_Misc_QuestionMark"
+    if item.itemID then
+        local itemTexture = GetItemIcon(item.itemID)
+        if itemTexture then
+            texture = itemTexture
+        end
+    elseif item.name then
+        local _, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo(item.name)
+        if itemTexture then
+            texture = itemTexture
+        end
+    end
+    return texture
+end
+
+QuestDetails.SetupItemFrame = function(row, item, frameWidth, ICON_SIZE, ITEM_HEIGHT)
+    row:SetWidth(frameWidth)
+    row:SetHeight(ITEM_HEIGHT)
+    
+    -- Получаем текстуру предмета
+    local texture = QuestDetails.GetItemTexture(item)
+    row.icon:SetTexture(texture)
+    
+    -- Настраиваем текст
+    local nameTxt = item.name or ""
+    row.text:SetWidth(frameWidth - (ICON_SIZE+10))
+    row.text:SetText(nameTxt)
+    if not row.text.SetMaxLines then
+        row.text:SetHeight(ITEM_HEIGHT - 5)
+    end
+    
+    -- Позиционируем элементы
+    row.iconBorder:SetPoint("LEFT", row, "LEFT", 0, 0)
+    row.text:SetPoint("LEFT", row.iconBorder, "RIGHT", 4, 0)
+    row.text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+    
+    -- Сохраняем данные предмета
+    row.itemID = item.itemID
+    row.itemName = item.name
+    row:Show()
+end
+
+QuestDetails.HideUnusedFrames = function(frames, usedCount)
+    for i = usedCount + 1, #frames do
+        frames[i]:Hide()
+    end
+end
+
+QuestDetails.CreateItemFrame = function(index, showCount)
     local ICON_SIZE = 40
     local ITEM_HEIGHT = ICON_SIZE + 4
     
@@ -160,45 +210,28 @@ QuestDetails.CreateRewardItemFrame = function(index)
     row.text:SetJustifyH("LEFT")
     row.text:SetJustifyV("MIDDLE")
     
+    -- Добавляем текст количества на иконку только для предметов-целей
+    if showCount then
+        row.countText = row.iconBorder:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+        row.countText:SetJustifyH("RIGHT")
+        row.countText:SetJustifyV("BOTTOM")
+        row.countText:SetPoint("BOTTOMRIGHT", row.iconBorder, "BOTTOMRIGHT", -2, 2)
+        row.countText:SetTextColor(1, 1, 1)
+    end
+    
     return row
+end
+
+-- Обратная совместимость - оставляем старые функции как алиасы
+QuestDetails.CreateRewardItemFrame = function(index)
+    return QuestDetails.CreateItemFrame(index, false)
 end
 
 QuestDetails.CreateObjectiveItemFrame = function(index)
-    local ICON_SIZE = 40
-    local ITEM_HEIGHT = ICON_SIZE + 4
-    
-    local row = CreateFrame("Frame", nil, rightContent)
-    ScrollBarUtils.SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
-    row:EnableMouse(true)
-
-    row.iconBorder = CreateFrame("Frame", nil, row)
-    ScrollBarUtils.SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
-    row.iconBorder:SetSize(ICON_SIZE+4, ICON_SIZE+4)
-
-    row.icon = row.iconBorder:CreateTexture(nil, "ARTWORK")
-    row.icon:SetPoint("CENTER")
-    row.icon:SetSize(ICON_SIZE, ICON_SIZE)
-    row.icon:SetTexCoord(5/64,59/64,5/64,59/64)
-
-    row.text = ScrollBarUtils.CreateFS(row, "GameFontHighlight")
-    row.text:SetJustifyH("LEFT")
-    row.text:SetJustifyV("MIDDLE")
-    
-    -- Добавляем текст количества на иконку
-    row.countText = row.iconBorder:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    row.countText:SetJustifyH("RIGHT")
-    row.countText:SetJustifyV("BOTTOM")
-    row.countText:SetPoint("BOTTOMRIGHT", row.iconBorder, "BOTTOMRIGHT", -2, 2)
-    row.countText:SetTextColor(1, 1, 1)
-    
-    -- Уменьшаем размер шрифта
-    local fontFile, fontSize = row.countText:GetFont()
-    row.countText:SetFont(fontFile, fontSize, "OUTLINE")
-    
-    return row
+    return QuestDetails.CreateItemFrame(index, true)
 end
 
-QuestDetails.SetupRewardItemTooltip = function(row)
+QuestDetails.SetupItemTooltip = function(row)
     row:SetScript("OnEnter", function(self)
         if not self.highlight then
             self.highlight = self:CreateTexture(nil, "BACKGROUND")
@@ -235,42 +268,9 @@ QuestDetails.SetupRewardItemTooltip = function(row)
     end)
 end
 
-QuestDetails.SetupObjectiveItemTooltip = function(row)
-    row:SetScript("OnEnter", function(self)
-        if not self.highlight then
-            self.highlight = self:CreateTexture(nil, "BACKGROUND")
-            self.highlight:SetAllPoints(self)
-            self.highlight:SetTexture("Interface\\Buttons\\WHITE8x8")
-            self.highlight:SetAlpha(0.4)
-            self.highlight:SetBlendMode("ADD")
-        end
-        self.highlight:Show()
-
-        if self.itemID then
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            if GameTooltip.SetItemByID then
-                GameTooltip:SetItemByID(self.itemID)
-            else
-                GameTooltip:SetHyperlink("item:" .. self.itemID)
-            end
-            GameTooltip:Show()
-        elseif self.itemName then
-            local _, name = GetItemInfo(self.itemName)
-            if name then
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetHyperlink(name)
-                GameTooltip:Show()
-            end
-        end
-    end)
-
-    row:SetScript("OnLeave", function(self)
-        if self.highlight then
-            self.highlight:Hide()
-        end
-        GameTooltip:Hide()
-    end)
-end
+-- Обратная совместимость - оставляем старые функции как алиасы
+QuestDetails.SetupRewardItemTooltip = QuestDetails.SetupItemTooltip
+QuestDetails.SetupObjectiveItemTooltip = QuestDetails.SetupItemTooltip
 
 QuestDetails.SetupRewardItems = function(q)
     if not q.rewards then return end
@@ -314,43 +314,10 @@ QuestDetails.SetupRewardItems = function(q)
             QuestDetails.SetupRewardItemTooltip(row)
         end
         
-        row:SetWidth(frameWidth)
-        row:SetHeight(ITEM_HEIGHT)
-        
-        -- Получаем текстуру предмета динамически
-        local texture = "Interface\\Icons\\INV_Misc_QuestionMark"
-        if item.itemID then
-            local itemTexture = GetItemIcon(item.itemID)
-            if itemTexture then
-                texture = itemTexture
-            end
-        elseif item.name then
-            local _, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo(item.name)
-            if itemTexture then
-                texture = itemTexture
-            end
-        end
-        row.icon:SetTexture(texture)
-        
-        local nameTxt = item.name or ""
-        row.text:SetWidth(frameWidth - (ICON_SIZE+10))
-        row.text:SetText(nameTxt)
-        if not row.text.SetMaxLines then
-            row.text:SetHeight(ITEM_HEIGHT - 5)
-        end
-        
-        row.iconBorder:SetPoint("LEFT", row, "LEFT", 0, 0)
-        row.text:SetPoint("LEFT", row.iconBorder, "RIGHT", 4, 0)
-        row.text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
-        
-        row.itemID = item.itemID
-        row.itemName = item.name
-        row:Show()
+        QuestDetails.SetupItemFrame(row, item, frameWidth, ICON_SIZE, ITEM_HEIGHT)
     end
     
-    for i = #rewardItems + 1, #rewardItemFrames do
-        rewardItemFrames[i]:Hide()
-    end
+    QuestDetails.HideUnusedFrames(rewardItemFrames, #rewardItems)
     
     rewardsVisibleCount = #rewardItems
 end
@@ -392,53 +359,21 @@ QuestDetails.SetupObjectiveItems = function(q)
             QuestDetails.SetupObjectiveItemTooltip(row)
         end
         
-        row:SetWidth(frameWidth)
-        row:SetHeight(ITEM_HEIGHT)
+        QuestDetails.SetupItemFrame(row, item, frameWidth, ICON_SIZE, ITEM_HEIGHT)
         
-        -- Получаем текстуру предмета
-        local texture = "Interface\\Icons\\INV_Misc_QuestionMark"
-        if item.itemID then
-            local itemTexture = GetItemIcon(item.itemID)
-            if itemTexture then
-                texture = itemTexture
-            end
-        elseif item.name then
-            local _, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo(item.name)
-            if itemTexture then
-                texture = itemTexture
-            end
-        end
-        row.icon:SetTexture(texture)
-        
-        -- Формируем текст с количеством
-        local nameTxt = item.name or ""
-        
-        -- Устанавливаем количество на иконку
-        if item.count then
+        -- Устанавливаем количество на иконку (специфично для предметов-целей)
+        if item.count and row.countText then
             row.countText:SetText(tostring(item.count))
             row.countText:Show()
-        else
+        elseif row.countText then
             row.countText:Hide()
         end
         
-        row.text:SetWidth(frameWidth - (ICON_SIZE+10))
-        row.text:SetText("|cffffffff" .. nameTxt .. "|r")
-        if not row.text.SetMaxLines then
-            row.text:SetHeight(ITEM_HEIGHT - 5)
-        end
-        
-        row.iconBorder:SetPoint("LEFT", row, "LEFT", 0, 0)
-        row.text:SetPoint("LEFT", row.iconBorder, "RIGHT", 4, 0)
-        row.text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
-        
-        row.itemID = item.itemID
-        row.itemName = item.name
-        row:Show()
+        -- Применяем цвет к тексту (специфично для предметов-целей)
+        row.text:SetText("|cffffffff" .. (item.name or "") .. "|r")
     end
     
-    for i = #q.objectiveItems + 1, #objectiveItemFrames do
-        objectiveItemFrames[i]:Hide()
-    end
+    QuestDetails.HideUnusedFrames(objectiveItemFrames, #q.objectiveItems)
     
     objectiveItemsVisibleCount = #q.objectiveItems
 end
