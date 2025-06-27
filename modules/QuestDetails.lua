@@ -31,19 +31,59 @@ end
 
 -- Вспомогательные функции для отображения деталей квеста
 QuestDetails.ClearQuestDetails = function()
-    if objectivesSummaryFS then objectivesSummaryFS:SetText("") end
-    if objectivesTextFS then objectivesTextFS:SetText("") end
-    if detailsFS then detailsFS:SetText("") end
-    if rewardsHeadingFS then rewardsHeadingFS:SetText("") end
-    if rewardExtraFS then rewardExtraFS:SetText("") end
-    if choiceLabelFS then choiceLabelFS:SetText("") end
+    -- Очищаем все текстовые элементы и их позиции
+    if objectivesSummaryFS then 
+        objectivesSummaryFS:SetText("") 
+        objectivesSummaryFS:ClearAllPoints()
+    end
+    if objectivesTextFS then 
+        objectivesTextFS:SetText("") 
+        objectivesTextFS:ClearAllPoints()
+    end
+    if detailsFS then 
+        detailsFS:SetText("") 
+        detailsFS:ClearAllPoints()
+    end
+    if rewardsHeadingFS then 
+        rewardsHeadingFS:SetText("") 
+        rewardsHeadingFS:ClearAllPoints()
+    end
+    if rewardExtraFS then 
+        rewardExtraFS:SetText("") 
+        rewardExtraFS:ClearAllPoints()
+    end
+    if choiceLabelFS then 
+        choiceLabelFS:SetText("") 
+        choiceLabelFS:ClearAllPoints()
+    end
+    if descHeadingFS then
+        descHeadingFS:SetText("")
+        descHeadingFS:ClearAllPoints()
+    end
     
-    for _, f in ipairs(rewardItemFrames) do f:Hide() end
+    -- detailsTitle не устанавливаем в nil, так как он нужен в LayoutQuestDetails
+    if detailsTitle then
+        detailsTitle:ClearAllPoints()
+    end
+    
+    -- Очищаем позиции фреймов предметов и скрываем их
+    for i, f in ipairs(rewardItemFrames) do 
+        f:Hide() 
+        f:ClearAllPoints()
+    end
     rewardsVisibleCount = 0
     
     -- Очистка предметов-целей
-    for _, f in ipairs(objectiveItemFrames) do f:Hide() end
+    for i, f in ipairs(objectiveItemFrames) do 
+        f:Hide() 
+        f:ClearAllPoints()
+    end
     objectiveItemsVisibleCount = 0
+    
+    -- Сбрасываем высоту контента
+    if rightContent then
+        rightContent:SetHeight(1)
+    end
 end
 
 QuestDetails.SetupQuestTitle = function(questID, q)
@@ -53,6 +93,8 @@ QuestDetails.SetupQuestTitle = function(questID, q)
     
     if detailsTitle then
         detailsTitle:SetText(gold .. title .. reset)
+        -- Восстанавливаем позицию заголовка после очистки
+        detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
     end
 end
 
@@ -69,6 +111,7 @@ QuestDetails.SetupObjectivesSummary = function(q)
         objectivesSummaryFS:SetText(white .. q.objectivesText .. reset)
     else
         objectivesSummaryFS:SetText("")
+        objectivesSummaryFS:ClearAllPoints()
     end
 end
 
@@ -107,9 +150,9 @@ QuestDetails.SetupDetailedObjectives = function(q)
             end
             -- Если это предмет, пропускаем - он будет отображен отдельно
         end
-        objectivesTextFS:SetText(table.concat(objLines, ""))
-    elseif objectivesTextFS then
-        objectivesTextFS:SetText("")
+        
+        local finalText = table.concat(objLines, "")
+        objectivesTextFS:SetText(finalText)
     end
 end
 
@@ -133,8 +176,10 @@ QuestDetails.SetupDescription = function(q)
         end
     else
         descHeadingFS:SetText("")
+        descHeadingFS:ClearAllPoints()
         if detailsFS then
             detailsFS:SetText("")
+            detailsFS:ClearAllPoints()
         end
     end
 end
@@ -212,11 +257,11 @@ QuestDetails.CreateItemFrame = function(index, showCount)
     
     -- Добавляем текст количества на иконку только для предметов-целей
     if showCount then
-        row.countText = row.iconBorder:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-        row.countText:SetJustifyH("RIGHT")
-        row.countText:SetJustifyV("BOTTOM")
-        row.countText:SetPoint("BOTTOMRIGHT", row.iconBorder, "BOTTOMRIGHT", -2, 2)
-        row.countText:SetTextColor(1, 1, 1)
+    row.countText = row.iconBorder:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    row.countText:SetJustifyH("RIGHT")
+    row.countText:SetJustifyV("BOTTOM")
+    row.countText:SetPoint("BOTTOMRIGHT", row.iconBorder, "BOTTOMRIGHT", -2, 2)
+    row.countText:SetTextColor(1, 1, 1)
     end
     
     return row
@@ -273,7 +318,14 @@ QuestDetails.SetupRewardItemTooltip = QuestDetails.SetupItemTooltip
 QuestDetails.SetupObjectiveItemTooltip = QuestDetails.SetupItemTooltip
 
 QuestDetails.SetupRewardItems = function(q)
-    if not q.rewards then return end
+    if not q.rewards then 
+        -- Очищаем заголовок наград если нет наград
+        if rewardsHeadingFS then
+            rewardsHeadingFS:SetText("")
+            rewardsHeadingFS:ClearAllPoints()
+        end
+        return 
+    end
     
     local itemsCount = q.rewards.items and #q.rewards.items or 0
     local choicesCount = q.rewards.choices and #q.rewards.choices or 0
@@ -282,7 +334,14 @@ QuestDetails.SetupRewardItems = function(q)
                       (q.rewards.money and q.rewards.money > 0) or 
                       (q.rewards.xp and q.rewards.xp > 0)
     
-    if not hasRewards then return end
+    if not hasRewards then 
+        -- Очищаем заголовок наград если нет наград
+        if rewardsHeadingFS then
+            rewardsHeadingFS:SetText("")
+            rewardsHeadingFS:ClearAllPoints()
+        end
+        return 
+    end
     
     if not rewardsHeadingFS then
         rewardsHeadingFS = ScrollBarUtils.CreateFS(rightContent, "GameFontNormalHuge")
@@ -323,7 +382,13 @@ QuestDetails.SetupRewardItems = function(q)
 end
 
 QuestDetails.SetupExtraRewards = function(q)
-    if not q.rewards then return end
+    if not q.rewards then 
+        if rewardExtraFS then
+            rewardExtraFS:SetText("")
+            rewardExtraFS:ClearAllPoints()
+        end
+        return 
+    end
     
     if not rewardExtraFS then
         rewardExtraFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
@@ -340,8 +405,13 @@ QuestDetails.SetupExtraRewards = function(q)
         table.insert(extraLines, "Опыт: " .. ((BreakUpLargeNumbers and BreakUpLargeNumbers(q.rewards.xp)) or q.rewards.xp))
     end
     
-    rewardExtraFS:SetSpacing(4)
-    rewardExtraFS:SetText(table.concat(extraLines, "\n"))
+    if #extraLines > 0 then
+        rewardExtraFS:SetSpacing(4)
+        rewardExtraFS:SetText(table.concat(extraLines, "\n"))
+    else
+        rewardExtraFS:SetText("")
+        rewardExtraFS:ClearAllPoints()
+    end
 end
 
 QuestDetails.SetupObjectiveItems = function(q)
@@ -379,20 +449,27 @@ QuestDetails.SetupObjectiveItems = function(q)
 end
 
 QuestDetails.LayoutQuestDetails = function()
-    local yOffset = -detailsTitle:GetStringHeight() - 5
-    
-    if objectivesSummaryFS then
-        objectivesSummaryFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-        if objectivesSummaryFS:GetText() ~= "" then
-            yOffset = yOffset - objectivesSummaryFS:GetStringHeight() - 6
-        end
+    -- Сбрасываем отступ к начальному значению для каждого квеста
+    local yOffset = 0
+    if detailsTitle then
+        yOffset = -detailsTitle:GetStringHeight() - 5
     end
     
-    if objectivesTextFS then
+    -- Устанавливаем позицию заголовка (если еще не установлена)
+    if detailsTitle and not detailsTitle:GetPoint() then
+        detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
+    end
+    
+    if objectivesSummaryFS and objectivesSummaryFS:GetText() ~= "" then
+        objectivesSummaryFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
+        yOffset = yOffset - objectivesSummaryFS:GetStringHeight() - 6
+    end
+    
+    -- Проверяем objectivesTextFS более строго - только если есть реальный текст
+    local objectivesText = objectivesTextFS and objectivesTextFS:GetText()
+    if objectivesText and objectivesText ~= "" and objectivesText:match("%S") then
         objectivesTextFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-        if objectivesTextFS:GetText() ~= "" then
-            yOffset = yOffset - objectivesTextFS:GetStringHeight() + 5
-        end
+        yOffset = yOffset - objectivesTextFS:GetStringHeight() + 5
     end
     
     -- Размещение предметов-целей сразу после текстовых целей
@@ -424,26 +501,21 @@ QuestDetails.LayoutQuestDetails = function()
     end
     
     -- Дополнительный отступ перед описанием, если нет серых целей и предметов
-    local objectivesText = objectivesTextFS and objectivesTextFS:GetText()
-    local hasTextObjectives = objectivesText and objectivesText ~= ""
+    local hasTextObjectives = objectivesText and objectivesText ~= "" and objectivesText:match("%S")
     local hasObjectiveItems = objectiveItemsVisibleCount > 0
     
     if not hasTextObjectives and not hasObjectiveItems then
         yOffset = yOffset - 6
     end
     
-    if descHeadingFS then
+    if descHeadingFS and descHeadingFS:GetText() ~= "" then
         descHeadingFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-        if descHeadingFS:GetText() ~= "" then
-            yOffset = yOffset - descHeadingFS:GetStringHeight() - 6
-        end
+        yOffset = yOffset - descHeadingFS:GetStringHeight() - 6
     end
     
-    if detailsFS then
+    if detailsFS and detailsFS:GetText() ~= "" then
         detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-        if detailsFS:GetText() ~= "" then
-            yOffset = yOffset - detailsFS:GetStringHeight() - 10
-        end
+        yOffset = yOffset - detailsFS:GetStringHeight() - 10
     end
     
     if rewardsHeadingFS and rewardsHeadingFS:GetText() ~= "" then
@@ -473,11 +545,9 @@ QuestDetails.LayoutQuestDetails = function()
             yOffset = yOffset - rows * (rewardItemFrames[1]:GetHeight() + rowSpacing)
         end
         
-        if rewardExtraFS then
+        if rewardExtraFS and rewardExtraFS:GetText() ~= "" then
             rewardExtraFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
-            if rewardExtraFS:GetText() ~= "" then
-                yOffset = yOffset - rewardExtraFS:GetStringHeight() - 4
-            end
+            yOffset = yOffset - rewardExtraFS:GetStringHeight() - 4
         end
     end
     
@@ -485,11 +555,13 @@ QuestDetails.LayoutQuestDetails = function()
     rightContent:SetHeight(totalHeight)
     rightScrollFrame:SetVerticalScroll(0)
     
-    ScrollBarUtils.UpdateScrollBar(rightScrollFrame, rightScrollbar)
+    ScrollBarUtils.UpdateScrollBar(rightScrollframe, rightScrollbar)
 end
 
 QuestDetails.ShowQuestDetails = function(questID)
-    if not MQSH_QuestDB or not MQSH_QuestDB[questID] then return end
+    if not MQSH_QuestDB or not MQSH_QuestDB[questID] then 
+        return 
+    end
     
     local q = MQSH_QuestDB[questID]
     
@@ -501,6 +573,7 @@ QuestDetails.ShowQuestDetails = function(questID)
     QuestDetails.SetupRewardItems(q)
     QuestDetails.SetupExtraRewards(q)
     QuestDetails.SetupObjectiveItems(q)
+    
     QuestDetails.LayoutQuestDetails()
 end
 
