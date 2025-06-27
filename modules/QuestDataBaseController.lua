@@ -57,13 +57,6 @@ local function GetQuestIDAndData(questLogIndex)
                                 -- Пытаемся найти itemID по имени предмета
                                 if itemName then
                                     local _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, itemID = GetItemInfo(itemName)
-                                    if not itemID then
-                                        -- Если не удалось найти по имени, пробуем через GetItemInfo
-                                        local itemLink = select(2, GetItemInfo(itemName))
-                                        if itemLink then
-                                            itemID = tonumber(itemLink:match("item:(%d+)"))
-                                        end
-                                    end
                                 end
                                 
                                 if itemName and itemCount then

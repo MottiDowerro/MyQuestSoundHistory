@@ -1,6 +1,3 @@
--- QuestDetails.lua
--- Модуль для отображения деталей квеста
-
 local QuestDetails = {}
 
 -- Вспомогательные переменные (будут передаваться через параметры или инициализироваться снаружи)
@@ -9,7 +6,6 @@ local objectivesSummaryFS, objectivesTextFS, detailsFS, rewardsHeadingFS, reward
 local rightContent, rightScrollFrame, rightScrollbar
 local selectedButton
 
--- Функции для инициализации переменных (чтобы не было глобальных зависимостей)
 function QuestDetails.InitVars(vars)
     rewardItemFrames = vars.rewardItemFrames
     objectiveItemFrames = vars.objectiveItemFrames
@@ -60,27 +56,21 @@ QuestDetails.ClearQuestDetails = function()
         descHeadingFS:SetText("")
         descHeadingFS:ClearAllPoints()
     end
-    
-    -- detailsTitle не устанавливаем в nil, так как он нужен в LayoutQuestDetails
     if detailsTitle then
+        detailsTitle:SetText("")
         detailsTitle:ClearAllPoints()
     end
-    
-    -- Очищаем позиции фреймов предметов и скрываем их
     for i, f in ipairs(rewardItemFrames) do 
         f:Hide() 
         f:ClearAllPoints()
     end
     rewardsVisibleCount = 0
-    
-    -- Очистка предметов-целей
     for i, f in ipairs(objectiveItemFrames) do 
         f:Hide() 
         f:ClearAllPoints()
     end
     objectiveItemsVisibleCount = 0
     
-    -- Сбрасываем высоту контента
     if rightContent then
         rightContent:SetHeight(1)
     end
@@ -107,8 +97,9 @@ QuestDetails.SetupObjectivesSummary = function(q)
         objectivesSummaryFS:SetJustifyH("LEFT")
     end
     
-    if q.objectivesText and q.objectivesText ~= "" then
-        objectivesSummaryFS:SetText(white .. q.objectivesText .. reset)
+    local objectivesText = q.objectivesText or ""
+    if objectivesText ~= "" then
+        objectivesSummaryFS:SetText(white .. objectivesText .. reset)
     else
         objectivesSummaryFS:SetText("")
         objectivesSummaryFS:ClearAllPoints()
@@ -119,7 +110,8 @@ QuestDetails.SetupDetailedObjectives = function(q)
     local grey = "|cffAAAAAA"
     local reset = "|r"
     
-    if q.objectives and #q.objectives > 0 then
+    local objectives = q.objectives or {}
+    if #objectives > 0 then
         if not objectivesTextFS then
             objectivesTextFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
             objectivesTextFS:SetJustifyH("LEFT")
@@ -134,7 +126,7 @@ QuestDetails.SetupDetailedObjectives = function(q)
             itemObjectives[item.name] = item
         end
         
-        for _, obj in ipairs(q.objectives) do
+        for _, obj in ipairs(objectives) do
             -- Проверяем, является ли эта цель предметом
             local isItemObjective = false
             for itemName, itemData in pairs(itemObjectives) do
@@ -167,10 +159,11 @@ QuestDetails.SetupDescription = function(q)
         descHeadingFS:SetJustifyH("LEFT")
     end
     
-    if q.description and q.description ~= "" then
+    local description = q.description or ""
+    if description ~= "" then
         descHeadingFS:SetText(gold .. "Описание:" .. reset)
         
-        local descText = white .. q.description:gsub("\n+$", "") .. reset
+        local descText = white .. description:gsub("\n+$", "") .. reset
         if detailsFS then
             detailsFS:SetText(descText)
         end
@@ -327,12 +320,14 @@ QuestDetails.SetupRewardItems = function(q)
         return 
     end
     
-    local itemsCount = q.rewards.items and #q.rewards.items or 0
-    local choicesCount = q.rewards.choices and #q.rewards.choices or 0
+    local items = q.rewards.items or {}
+    local choices = q.rewards.choices or {}
+    local itemsCount = #items
+    local choicesCount = #choices
     
     local hasRewards = (itemsCount > 0) or (choicesCount > 0) or 
-                      (q.rewards.money and q.rewards.money > 0) or 
-                      (q.rewards.xp and q.rewards.xp > 0)
+                      (q.rewards.money > 0) or 
+                      (q.rewards.xp > 0)
     
     if not hasRewards then 
         -- Очищаем заголовок наград если нет наград
@@ -351,12 +346,12 @@ QuestDetails.SetupRewardItems = function(q)
     
     local rewardItems = {}
     if choicesCount > 0 then
-        for _, item in ipairs(q.rewards.choices) do
+        for _, item in ipairs(choices) do
             table.insert(rewardItems, item)
         end
     end
     if itemsCount > 0 then
-        for _, item in ipairs(q.rewards.items) do
+        for _, item in ipairs(items) do
             table.insert(rewardItems, item)
         end
     end
@@ -396,12 +391,12 @@ QuestDetails.SetupExtraRewards = function(q)
     
     local extraLines = {}
     
-    if q.rewards.money and q.rewards.money > 0 then
+    if q.rewards.money > 0 then
         local coinStr = GetCoinTextureString(q.rewards.money, 20)
         table.insert(extraLines, "Вы также получите: " .. coinStr)
     end
     
-    if q.rewards.xp and q.rewards.xp > 0 then
+    if q.rewards.xp > 0 then
         table.insert(extraLines, "Опыт: " .. ((BreakUpLargeNumbers and BreakUpLargeNumbers(q.rewards.xp)) or q.rewards.xp))
     end
     
@@ -415,13 +410,14 @@ QuestDetails.SetupExtraRewards = function(q)
 end
 
 QuestDetails.SetupObjectiveItems = function(q)
-    if not q.objectiveItems or #q.objectiveItems == 0 then return end
+    local objectiveItems = q.objectiveItems or {}
+    if #objectiveItems == 0 then return end
     
     local ICON_SIZE = 40
     local ITEM_HEIGHT = ICON_SIZE + 4
     local frameWidth = rightScrollFrame:GetWidth()
     
-    for i, item in ipairs(q.objectiveItems) do
+    for i, item in ipairs(objectiveItems) do
         local row = objectiveItemFrames[i]
         if not row then
             row = QuestDetails.CreateObjectiveItemFrame(i)
@@ -432,7 +428,7 @@ QuestDetails.SetupObjectiveItems = function(q)
         QuestDetails.SetupItemFrame(row, item, frameWidth, ICON_SIZE, ITEM_HEIGHT)
         
         -- Устанавливаем количество на иконку (специфично для предметов-целей)
-        if item.count and row.countText then
+        if item.count and item.count > 0 and row.countText then
             row.countText:SetText(tostring(item.count))
             row.countText:Show()
         elseif row.countText then
@@ -443,9 +439,9 @@ QuestDetails.SetupObjectiveItems = function(q)
         row.text:SetText("|cffffffff" .. (item.name or "") .. "|r")
     end
     
-    QuestDetails.HideUnusedFrames(objectiveItemFrames, #q.objectiveItems)
+    QuestDetails.HideUnusedFrames(objectiveItemFrames, #objectiveItems)
     
-    objectiveItemsVisibleCount = #q.objectiveItems
+    objectiveItemsVisibleCount = #objectiveItems
 end
 
 QuestDetails.LayoutQuestDetails = function()
@@ -474,7 +470,7 @@ QuestDetails.LayoutQuestDetails = function()
     
     -- Размещение предметов-целей сразу после текстовых целей
     if objectiveItemsVisibleCount > 0 then
-        yOffset = yOffset - 8 -- Дополнительный отступ перед предметами-целями
+        yOffset = yOffset - 4 -- Дополнительный отступ перед предметами-целями
         
         local colSpacing, rowSpacing = 4, 4
         local frameWidth = rightScrollFrame:GetWidth()
@@ -500,13 +496,9 @@ QuestDetails.LayoutQuestDetails = function()
         end
     end
     
-    -- Дополнительный отступ перед описанием, если нет серых целей и предметов
     local hasTextObjectives = objectivesText and objectivesText ~= "" and objectivesText:match("%S")
     local hasObjectiveItems = objectiveItemsVisibleCount > 0
     
-    if not hasTextObjectives and not hasObjectiveItems then
-        yOffset = yOffset - 6
-    end
     
     if descHeadingFS and descHeadingFS:GetText() ~= "" then
         descHeadingFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
@@ -555,7 +547,7 @@ QuestDetails.LayoutQuestDetails = function()
     rightContent:SetHeight(totalHeight)
     rightScrollFrame:SetVerticalScroll(0)
     
-    ScrollBarUtils.UpdateScrollBar(rightScrollframe, rightScrollbar)
+    ScrollBarUtils.UpdateScrollBar(rightScrollFrame, rightScrollbar)
 end
 
 QuestDetails.ShowQuestDetails = function(questID)
@@ -587,5 +579,4 @@ QuestDetails.HighlightQuestButton = function(btn)
     end
 end
 
--- Экспортируем модуль в глобальную область
 _G.QuestDetails = QuestDetails 

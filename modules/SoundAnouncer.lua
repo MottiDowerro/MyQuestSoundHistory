@@ -1,6 +1,6 @@
 local function SoundAnouncer_OnLoad()
     
-    local checkForUpdate = nil
+    local checkForUpdate = 0
     local f = CreateFrame("Frame")
 
     f:RegisterEvent("QUEST_WATCH_UPDATE")
@@ -11,10 +11,10 @@ local function SoundAnouncer_OnLoad()
             if arg1 then
                 checkForUpdate = arg1
             end
-        elseif event == "QUEST_LOG_UPDATE" and checkForUpdate then
+        elseif event == "QUEST_LOG_UPDATE" and checkForUpdate > 0 then
             local questId = checkForUpdate
             if not questId or not IsQuestWatched(questId) then
-                checkForUpdate = nil
+                checkForUpdate = 0
                 return
             end
 
@@ -35,7 +35,7 @@ local function SoundAnouncer_OnLoad()
             
                 if allComplete and MQSH_Config and MQSH_Config.enableWorkComplete then
                     PlaySoundFile(MQSH_Config.workCompleteSound)
-                    checkForUpdate = nil
+                    checkForUpdate = 0
                     return
                 elseif singleCompleted and MQSH_Config and MQSH_Config.enableSingleComplete then
                     PlaySoundFile(MQSH_Config.singleCompleteSound)
@@ -44,7 +44,7 @@ local function SoundAnouncer_OnLoad()
                 end
 
             else
-                checkForUpdate = nil 
+                checkForUpdate = 0 
                 return 
             end
         end

@@ -1,6 +1,3 @@
--- QuestList.lua
--- Модуль для управления списком квестов в левом окне
-
 local QuestList = {}
 
 -- Вспомогательные переменные (будут передаваться через параметры или инициализироваться снаружи)
@@ -55,7 +52,7 @@ QuestList.SetupQuestButton = function(btn, index, qID, data)
     local title = data.title or ("ID " .. tostring(qID))
     local level = data.level or "??"
     local color
-    if type(level) == "number" then
+    if type(level) == "number" and level > 0 then
         color = GetQuestDifficultyColor(level)
     else
         color = { r = 1, g = 0, b = 0 }
@@ -102,14 +99,13 @@ QuestList.BuildQuestList = function()
     end
 
     local questIDs = {}
-    if MQSH_QuestDB then
-        for qID in pairs(MQSH_QuestDB) do
-            table.insert(questIDs, qID)
-        end
+    local questDB = MQSH_QuestDB or {}
+    for qID in pairs(questDB) do
+        table.insert(questIDs, qID)
     end
 
     for index, qID in ipairs(questIDs) do
-        local data = MQSH_QuestDB[qID]
+        local data = questDB[qID]
         local btn = leftContent.buttons[index]
         if not btn then
             btn = QuestList.CreateQuestButton(index, qID, data)
