@@ -9,6 +9,7 @@
 Localization.lua
 Settings.lua
 Core.lua
+modules\ScrollBarUtils.lua
 modules\SoundAnouncer.lua
 modules\QuestDataBaseController.lua
 modules\QuestListOverlay.lua

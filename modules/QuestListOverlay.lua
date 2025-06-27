@@ -7,7 +7,6 @@ local OVERLAY_PADDING_BOTTOM = 10        -- Отступ снизу
 local WINDOW_SPACING = 4                 -- Расстояние между элементами
 
 -- Настройки окон
-local SCROLLBAR_WIDTH = 16               -- Ширина скроллбара
 local TITLE_TOP_OFFSET = 5               -- Отступ заголовка
 
 -- Отступы контента внутри окон
@@ -38,65 +37,8 @@ local leftScrollbar, rightScrollbar
 local objectiveItemFrames = {}
 local objectiveItemsVisibleCount = 0
 
--- Функции для скроллбаров
-local function UpdateScrollBar(scrollFrame, scrollbar)
-    if not scrollFrame or not scrollbar then return end
-    
-    local contentHeight = scrollFrame:GetScrollChild():GetHeight()
-    local frameHeight = scrollFrame:GetHeight()
-    local maxScroll = math.max(0, contentHeight - frameHeight)
-    
-    scrollbar:SetMinMaxValues(0, maxScroll)
-    scrollbar:Show() -- Всегда показываем скроллбар
-    
-    -- Принудительно обновляем ползунок
-    if maxScroll <= 0 then
-        scrollbar:SetValue(0)
-    end
-end
-
-local function UpdateAllScrollBars()
-    UpdateScrollBar(leftScrollFrame, leftScrollbar)
-    UpdateScrollBar(rightScrollFrame, rightScrollbar)
-end
-
-local function ResetScrollBars()
-    if leftScrollFrame then leftScrollFrame:SetVerticalScroll(0) end
-    if rightScrollFrame then rightScrollFrame:SetVerticalScroll(0) end
-    if leftScrollbar then leftScrollbar:SetValue(0) end
-    if rightScrollbar then rightScrollbar:SetValue(0) end
-end
-
-local function SetBackdrop(frame, color, borderColor)
-    frame:SetBackdrop({
-        bgFile   = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        tile     = true,
-        tileSize = 8,
-        edgeSize = 1,
-        insets   = { left = 1, right = 1, top = 1, bottom = 1 },
-    })
-    frame:SetBackdropColor(unpack(color))
-    frame:SetBackdropBorderColor(unpack(borderColor))
-end
-
-local function CreateFS(parent, template, width)
-    local fs = parent:CreateFontString(nil, "ARTWORK", template or "GameFontHighlight")
-    fs:SetJustifyH("LEFT")
-    fs:SetJustifyV("TOP")
-    if width then
-        fs:SetWidth(width)
-        fs:SetWordWrap(true)
-    end
-    return fs
-end
-
-local function RemoveFontOutline(fs)
-    local fontFile, fontSize = fs:GetFont()
-    if fontFile then
-        fs:SetFont(fontFile, fontSize, "")
-    end
-end
+-- Таблица пар скроллбаров для утилит
+local scrollPairs = {}
 
 -- Вспомогательные функции для отображения деталей квеста
 local function ClearQuestDetails()
@@ -130,7 +72,7 @@ local function SetupObjectivesSummary(q)
     local reset = "|r"
     
     if not objectivesSummaryFS then
-        objectivesSummaryFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+        objectivesSummaryFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
         objectivesSummaryFS:SetJustifyH("LEFT")
     end
     
@@ -147,7 +89,7 @@ local function SetupDetailedObjectives(q)
     
     if q.objectives and #q.objectives > 0 then
         if not objectivesTextFS then
-            objectivesTextFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+            objectivesTextFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
             objectivesTextFS:SetJustifyH("LEFT")
         end
 
@@ -188,8 +130,8 @@ local function SetupDescription(q)
     local reset = "|r"
     
     if not descHeadingFS then
-        descHeadingFS = CreateFS(rightContent, "GameFontNormalHuge")
-        RemoveFontOutline(descHeadingFS)
+        descHeadingFS = ScrollBarUtils.CreateFS(rightContent, "GameFontNormalHuge")
+        ScrollBarUtils.RemoveFontOutline(descHeadingFS)
         descHeadingFS:SetJustifyH("LEFT")
     end
     
@@ -213,11 +155,11 @@ local function CreateRewardItemFrame(index)
     local ITEM_HEIGHT = ICON_SIZE + 4
     
     local row = CreateFrame("Frame", nil, rightContent)
-    SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
+    ScrollBarUtils.SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
     row:EnableMouse(true)
 
     row.iconBorder = CreateFrame("Frame", nil, row)
-    SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
+    ScrollBarUtils.SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
     row.iconBorder:SetSize(ICON_SIZE+4, ICON_SIZE+4)
 
     row.icon = row.iconBorder:CreateTexture(nil, "ARTWORK")
@@ -225,7 +167,7 @@ local function CreateRewardItemFrame(index)
     row.icon:SetSize(ICON_SIZE, ICON_SIZE)
     row.icon:SetTexCoord(5/64,59/64,5/64,59/64)
 
-    row.text = CreateFS(row, "GameFontHighlight")
+    row.text = ScrollBarUtils.CreateFS(row, "GameFontHighlight")
     row.text:SetJustifyH("LEFT")
     row.text:SetJustifyV("MIDDLE")
     
@@ -237,11 +179,11 @@ local function CreateObjectiveItemFrame(index)
     local ITEM_HEIGHT = ICON_SIZE + 4
     
     local row = CreateFrame("Frame", nil, rightContent)
-    SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
+    ScrollBarUtils.SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
     row:EnableMouse(true)
 
     row.iconBorder = CreateFrame("Frame", nil, row)
-    SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
+    ScrollBarUtils.SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
     row.iconBorder:SetSize(ICON_SIZE+4, ICON_SIZE+4)
 
     row.icon = row.iconBorder:CreateTexture(nil, "ARTWORK")
@@ -249,7 +191,7 @@ local function CreateObjectiveItemFrame(index)
     row.icon:SetSize(ICON_SIZE, ICON_SIZE)
     row.icon:SetTexCoord(5/64,59/64,5/64,59/64)
 
-    row.text = CreateFS(row, "GameFontHighlight")
+    row.text = ScrollBarUtils.CreateFS(row, "GameFontHighlight")
     row.text:SetJustifyH("LEFT")
     row.text:SetJustifyV("MIDDLE")
     
@@ -354,8 +296,8 @@ local function SetupRewardItems(q)
     if not hasRewards then return end
     
     if not rewardsHeadingFS then
-        rewardsHeadingFS = CreateFS(rightContent, "GameFontNormalHuge")
-        RemoveFontOutline(rewardsHeadingFS)
+        rewardsHeadingFS = ScrollBarUtils.CreateFS(rightContent, "GameFontNormalHuge")
+        ScrollBarUtils.RemoveFontOutline(rewardsHeadingFS)
     end
     rewardsHeadingFS:SetText("|cffFFD100Награды:|r")
     
@@ -428,7 +370,7 @@ local function SetupExtraRewards(q)
     if not q.rewards then return end
     
     if not rewardExtraFS then
-        rewardExtraFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+        rewardExtraFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
     end
     
     local extraLines = {}
@@ -619,7 +561,7 @@ local function LayoutQuestDetails()
     rightContent:SetHeight(totalHeight)
     rightScrollFrame:SetVerticalScroll(0)
     
-    UpdateScrollBar(rightScrollFrame, rightScrollbar)
+    ScrollBarUtils.UpdateScrollBar(rightScrollFrame, rightScrollbar)
 end
 
 local function ShowQuestDetails(questID)
@@ -752,7 +694,7 @@ local function BuildQuestList()
     leftContent:SetHeight(totalHeight)
     leftScrollFrame:SetVerticalScroll(0)
     
-    UpdateAllScrollBars()
+    ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
 
     if #questIDs > 0 and (not selectedButton or not selectedButton:IsShown()) then
         local firstBtn = leftContent.buttons[1]
@@ -774,7 +716,7 @@ local function TryCreateQuestListUI()
     overlay = CreateFrame("Frame", "MQSH_ListOverlay", QuestLogFrame)
     overlay:SetPoint("TOPLEFT", QuestLogFrame, "TOPLEFT", 11, -12)
     overlay:SetPoint("BOTTOMRIGHT", QuestLogFrame, "BOTTOMRIGHT", -1, 11)
-    SetBackdrop(overlay, {0.05, 0.05, 0.05, 0.85}, {0, 0, 0, 0.95})
+    ScrollBarUtils.SetBackdrop(overlay, {0.05, 0.05, 0.05, 0.85}, {0, 0, 0, 0.95})
     overlay:SetFrameStrata("DIALOG")
     overlay:Hide()
 
@@ -786,7 +728,7 @@ local function TryCreateQuestListUI()
     local overlayWidth = QuestLogFrame:GetWidth() - 12
     local overlayHeight = QuestLogFrame:GetHeight() - 23
     
-    local totalFixedWidth = OVERLAY_PADDING_LEFT_RIGHT + SCROLLBAR_WIDTH + WINDOW_SPACING + SCROLLBAR_WIDTH + OVERLAY_PADDING_LEFT_RIGHT
+    local totalFixedWidth = OVERLAY_PADDING_LEFT_RIGHT + ScrollBarUtils.SCROLLBAR_WIDTH + WINDOW_SPACING + ScrollBarUtils.SCROLLBAR_WIDTH + OVERLAY_PADDING_LEFT_RIGHT
     local totalSpacing = WINDOW_SPACING * 3
     local availableWidth = overlayWidth - totalFixedWidth - totalSpacing
     local windowWidth = availableWidth / 2
@@ -796,7 +738,7 @@ local function TryCreateQuestListUI()
     
     local leftWindowX = OVERLAY_PADDING_LEFT_RIGHT
     local leftScrollbarX = leftWindowX + windowWidth + WINDOW_SPACING
-    local rightWindowX = leftScrollbarX + SCROLLBAR_WIDTH + WINDOW_SPACING
+    local rightWindowX = leftScrollbarX + ScrollBarUtils.SCROLLBAR_WIDTH + WINDOW_SPACING
     local rightScrollbarX = rightWindowX + windowWidth + WINDOW_SPACING
     
     local elementY = -OVERLAY_PADDING_TOP
@@ -804,86 +746,44 @@ local function TryCreateQuestListUI()
     local leftWindow = CreateFrame("Frame", nil, overlay)
     leftWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", leftWindowX, elementY)
     leftWindow:SetSize(windowWidth, windowHeight)
-    SetBackdrop(leftWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
+    ScrollBarUtils.SetBackdrop(leftWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
 
-    local leftTitle = CreateFS(overlay, "GameFontNormal")
+    local leftTitle = ScrollBarUtils.CreateFS(overlay, "GameFontNormal")
     leftTitle:SetPoint("BOTTOM", leftWindow, "TOP", 0, 5)
     leftTitle:SetJustifyH("CENTER")
     leftTitle:SetText("|cffFFD100Квесты|r")
 
-    leftScrollFrame = CreateFrame("ScrollFrame", nil, leftWindow)
-    leftScrollFrame:SetPoint("TOPLEFT", leftWindow, "TOPLEFT", LEFT_WINDOW_PADDING_X, -LEFT_WINDOW_PADDING_Y)
-    leftScrollFrame:SetPoint("BOTTOMRIGHT", leftWindow, "BOTTOMRIGHT", -LEFT_WINDOW_PADDING_X, LEFT_WINDOW_PADDING_Y)
+    -- Создаем левый ScrollFrame и скроллбар
+    leftScrollFrame, leftContent = ScrollBarUtils.CreateScrollFrame(leftWindow, LEFT_WINDOW_PADDING_X, LEFT_WINDOW_PADDING_Y)
+    leftScrollbar = ScrollBarUtils.CreateScrollBar(overlay, leftScrollFrame, leftWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, BUTTON_HEIGHT + BUTTON_SPACING)
 
-    leftContent = CreateFrame("Frame", nil, leftScrollFrame)
-    leftContent:SetSize(leftScrollFrame:GetWidth(), 1)
-    leftScrollFrame:SetScrollChild(leftContent)
-
-    leftScrollbar = CreateFrame("Slider", nil, overlay, "UIPanelScrollBarTemplate")
-    leftScrollbar:SetPoint("TOPLEFT", leftWindow, "TOPRIGHT", WINDOW_SPACING, -14)
-    leftScrollbar:SetPoint("BOTTOMLEFT", leftWindow, "BOTTOMRIGHT", WINDOW_SPACING, 14)
-    leftScrollbar:SetWidth(SCROLLBAR_WIDTH)
-    leftScrollbar:SetValueStep(1)
-    leftScrollbar:SetValue(0)
-    leftScrollbar:SetMinMaxValues(0, 0)
-    
-    leftScrollbar:SetScript("OnValueChanged", function(self, value)
-        leftScrollFrame:SetVerticalScroll(value)
-    end)
-    
-    leftWindow:EnableMouseWheel(true)
-    leftWindow:SetScript("OnMouseWheel", function(self, delta)
-        local currentValue = leftScrollbar:GetValue()
-        local scrollStep = BUTTON_HEIGHT + BUTTON_SPACING
-        local newValue = currentValue - (delta * scrollStep)
-        leftScrollbar:SetValue(newValue)
-    end)
-
+    -- Создаем правый ScrollFrame и скроллбар
     local rightWindow = CreateFrame("Frame", nil, overlay)
     rightWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", rightWindowX, elementY)
     rightWindow:SetSize(windowWidth, windowHeight)
-    SetBackdrop(rightWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
+    ScrollBarUtils.SetBackdrop(rightWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
 
-    rightScrollFrame = CreateFrame("ScrollFrame", nil, rightWindow)
-    rightScrollFrame:SetPoint("TOPLEFT", rightWindow, "TOPLEFT", RIGHT_WINDOW_PADDING_X, -RIGHT_WINDOW_PADDING_Y)
-    rightScrollFrame:SetPoint("BOTTOMRIGHT", rightWindow, "BOTTOMRIGHT", -RIGHT_WINDOW_PADDING_X, RIGHT_WINDOW_PADDING_Y)
+    rightScrollFrame, rightContent = ScrollBarUtils.CreateScrollFrame(rightWindow, RIGHT_WINDOW_PADDING_X, RIGHT_WINDOW_PADDING_Y)
+    rightScrollbar = ScrollBarUtils.CreateScrollBar(overlay, rightScrollFrame, rightWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, 20)
 
-    rightContent = CreateFrame("Frame", nil, rightScrollFrame)
-    rightContent:SetSize(rightScrollFrame:GetWidth(), 1)
-    rightScrollFrame:SetScrollChild(rightContent)
+    -- Инициализируем таблицу пар скроллбаров
+    scrollPairs = {
+        {scrollFrame = leftScrollFrame, scrollbar = leftScrollbar},
+        {scrollFrame = rightScrollFrame, scrollbar = rightScrollbar}
+    }
 
-    rightScrollbar = CreateFrame("Slider", nil, overlay, "UIPanelScrollBarTemplate")
-    rightScrollbar:SetPoint("TOPLEFT", rightWindow, "TOPRIGHT", WINDOW_SPACING, -14)
-    rightScrollbar:SetPoint("BOTTOMLEFT", rightWindow, "BOTTOMRIGHT", WINDOW_SPACING, 14)
-    rightScrollbar:SetWidth(SCROLLBAR_WIDTH)
-    rightScrollbar:SetValueStep(1)
-    rightScrollbar:SetValue(0)
-    rightScrollbar:SetMinMaxValues(0, 0)
-    
-    rightScrollbar:SetScript("OnValueChanged", function(self, value)
-        rightScrollFrame:SetVerticalScroll(value)
-    end)
-    
-    rightWindow:EnableMouseWheel(true)
-    rightWindow:SetScript("OnMouseWheel", function(self, delta)
-        local currentValue = rightScrollbar:GetValue()
-        local scrollStep = 20 -- Фиксированный шаг для правого окна
-        local newValue = currentValue - (delta * scrollStep)
-        rightScrollbar:SetValue(newValue)
-    end)
-
-    detailsTitle = CreateFS(rightContent, "GameFontNormalHuge")
-    RemoveFontOutline(detailsTitle)
+    detailsTitle = ScrollBarUtils.CreateFS(rightContent, "GameFontNormalHuge")
+    ScrollBarUtils.RemoveFontOutline(detailsTitle)
     detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
     detailsTitle:SetJustifyH("LEFT")
 
-    detailsFS = CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+    detailsFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
     detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -25)
 
     showBtn:SetScript("OnClick", function()
         if overlay:IsShown() then
             overlay:Hide()
-            ResetScrollBars()
+            ScrollBarUtils.ResetScrollBars(scrollPairs)
         else
             overlay:Show()
         end
@@ -891,16 +791,16 @@ local function TryCreateQuestListUI()
 
     hooksecurefunc(QuestLogFrame, "Hide", function()
         overlay:Hide()
-        ResetScrollBars()
+        ScrollBarUtils.ResetScrollBars(scrollPairs)
     end)
 
     overlay:SetScript("OnShow", function()
         BuildQuestList()
-        UpdateAllScrollBars()
+        ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
     end)
 
     -- Инициализируем скроллбары
-    UpdateAllScrollBars()
+    ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
 
     uiCreated = true
 end
