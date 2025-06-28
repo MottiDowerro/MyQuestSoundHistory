@@ -18,7 +18,6 @@ local function GetQuestIDAndData(questLogIndex)
     local questID, questData = nil, nil
 
     WithQuestLogSelection(questLogIndex, function()
-        -- Получаем ID квеста
         local title, level, _, _, _, _, _, qID = GetQuestLogTitle(questLogIndex)
         if qID and qID ~= 0 then
             questID = qID
@@ -26,39 +25,53 @@ local function GetQuestIDAndData(questLogIndex)
             questID = GetQuestID()
         end
 
-        -- Если ID найден, собираем данные о квесте
         if questID then
             local description, objectivesText = GetQuestLogQuestText()
 
-            -- Получение целей квеста
+            -- Локация и координаты для WoW 3.3.5
+            local locationName = GetRealZoneText() or GetZoneText()
+            local locationID = nil
+            if GetCurrentMapAreaID then
+                locationID = GetCurrentMapAreaID()
+            end
+            local x, y = 0, 0
+            if SetMapToCurrentZone then SetMapToCurrentZone() end
+            if GetPlayerMapPosition then
+                x, y = GetPlayerMapPosition("player")
+                x = math.floor((x or 0) * 10000) / 100
+                y = math.floor((y or 0) * 10000) / 100
+            end
+            local coordinates = { x = x, y = y }
+
+            -- NPC
+            local target = UnitName("target")
+            local npcName = nil
+            if target and not UnitIsPlayer("target") then
+                npcName = target
+            end
+            if not npcName then
+                npcName = "Неизвестный NPC"
+            end
+
+            -- Цели
             local objectives = {}
-            local objectiveItems = {} -- Новый массив для предметов-целей
+            local objectiveItems = {}
             local numObjectives = GetNumQuestLeaderBoards()
             if numObjectives and numObjectives > 0 then
                 for i = 1, numObjectives do
                     local desc, type = select(1, GetQuestLogLeaderBoard(i))
                     if desc then
                         table.insert(objectives, desc)
-                        
-                        -- Проверяем, является ли цель предметом
                         if type == "item" then
-                            -- Пытаемся извлечь информацию о предмете из описания
                             local itemName, itemCount, itemID
-                            
-                            -- Парсим описание цели для извлечения информации о предмете
-                            -- Пример: "Добыть банданы: 0/12" или "Собрать банданы (0/12)"
                             local itemPattern = "([^:]+):%s*(%d+)/(%d+)"
                             local itemNameMatch, currentCount, totalCount = desc:match(itemPattern)
-                            
                             if itemNameMatch then
                                 itemName = itemNameMatch:trim()
                                 itemCount = tonumber(totalCount)
-                                
-                                -- Пытаемся найти itemID по имени предмета
                                 if itemName then
                                     local _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, itemID = GetItemInfo(itemName)
                                 end
-                                
                                 if itemName and itemCount then
                                     table.insert(objectiveItems, {
                                         name = itemName,
@@ -72,7 +85,7 @@ local function GetQuestIDAndData(questLogIndex)
                 end
             end
 
-            -- Получение наград
+            -- Награды
             local rewards = {
                 items   = {},
                 choices = {},
@@ -80,7 +93,6 @@ local function GetQuestIDAndData(questLogIndex)
                 xp      = GetQuestLogRewardXP(),
             }
 
-            -- Добавление предметов в награды
             local numRewards = GetNumQuestLogRewards()
             if numRewards and numRewards > 0 then
                 for i = 1, numRewards do
@@ -94,7 +106,6 @@ local function GetQuestIDAndData(questLogIndex)
                 end
             end
 
-            -- Добавление предметов выбора
             local numChoices = GetNumQuestLogChoices()
             if numChoices and numChoices > 0 then
                 for i = 1, numChoices do
@@ -108,15 +119,21 @@ local function GetQuestIDAndData(questLogIndex)
                 end
             end
 
-            -- Сохраняем данные о квесте
+            local timeAccepted = date("%d.%m.%y %H:%M:%S")
+
             questData = {
                 title           = title,
                 level           = level,
                 description     = description,
                 objectivesText  = objectivesText,
                 objectives      = objectives,
-                objectiveItems  = objectiveItems, -- Добавляем предметы-цели
+                objectiveItems  = objectiveItems,
                 rewards         = rewards,
+                npcName         = npcName,
+                locationName    = locationName,
+                locationID      = locationID,
+                coordinates     = coordinates,
+                timeAccepted    = timeAccepted,
             }
         end
     end)
@@ -131,14 +148,12 @@ local function QuestDataBaseController_OnLoad()
     frame:SetScript("OnEvent", function(self, event, ...)
         if event == "QUEST_ACCEPTED" then
             local questLogIndex, questIDFromEvent = ...
-
-            C_Timer:After(1, function() -- Задержка, чтобы в базе данных не было предметов с именем "nil"
-                -- Получаем ID и данные о квесте
+            
+            C_Timer:After(1, function()
                 local questID, questData = GetQuestIDAndData(questLogIndex)
-
-                -- Если ID найден, добавляем квест в базу данных, если квеста с таким Id еще нету
-                if questID and not MQSH_QuestDB[questID] then
+                if questID and questData and not MQSH_QuestDB[questID] then
                     MQSH_QuestDB[questID] = questData
+                else
                 end
             end)
         end

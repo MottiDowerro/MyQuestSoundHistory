@@ -3,6 +3,7 @@ local QuestDetails = {}
 -- Вспомогательные переменные (будут передаваться через параметры или инициализироваться снаружи)
 local rewardItemFrames, objectiveItemFrames, rewardsVisibleCount, objectiveItemsVisibleCount
 local objectivesSummaryFS, objectivesTextFS, detailsFS, rewardsHeadingFS, rewardExtraFS, choiceLabelFS, descHeadingFS, detailsTitle
+local questMetaFS -- Новый элемент для метаданных квеста
 local rightContent, rightScrollFrame, rightScrollbar
 local selectedButton
 
@@ -19,6 +20,7 @@ function QuestDetails.InitVars(vars)
     choiceLabelFS = vars.choiceLabelFS
     descHeadingFS = vars.descHeadingFS
     detailsTitle = vars.detailsTitle
+    questMetaFS = vars.questMetaFS
     rightContent = vars.rightContent
     rightScrollFrame = vars.rightScrollFrame
     rightScrollbar = vars.rightScrollbar
@@ -56,6 +58,10 @@ QuestDetails.ClearQuestDetails = function()
         descHeadingFS:SetText("")
         descHeadingFS:ClearAllPoints()
     end
+    if questMetaFS then
+        questMetaFS:SetText("")
+        questMetaFS:ClearAllPoints()
+    end
     if detailsTitle then
         detailsTitle:SetText("")
         detailsTitle:ClearAllPoints()
@@ -85,6 +91,49 @@ QuestDetails.SetupQuestTitle = function(questID, q)
         detailsTitle:SetText(gold .. title .. reset)
         -- Восстанавливаем позицию заголовка после очистки
         detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
+    end
+end
+
+QuestDetails.SetupQuestMeta = function(q)
+    local blue = "|cff00B4FF"
+    local grey = "|cffAAAAAA"
+    local gold = "|cffFFD100"
+    local reset = "|r"
+    
+    if not questMetaFS then
+        questMetaFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+        questMetaFS:SetJustifyH("LEFT")
+    end
+    
+    local metaLines = {}
+    
+    -- Время принятия квеста
+    if q.timeAccepted then
+        table.insert(metaLines, gold .. "Принят:" .. reset .. " " .. grey .. q.timeAccepted .. reset)
+    end
+    
+    -- Координаты на отдельной строке
+    if q.coordinates and q.coordinates.x and q.coordinates.y then
+        local coordText = string.format("%.2f, %.2f", q.coordinates.x, q.coordinates.y)
+        table.insert(metaLines, gold .. "Координаты:" .. reset .. " " .. grey .. coordText .. reset)
+    end
+    
+    -- NPC, который дал квест
+    if q.npcName and q.npcName ~= "Неизвестный NPC" then
+        table.insert(metaLines, gold .. "От кого:" .. reset .. " " .. blue .. q.npcName .. reset)
+    end
+    
+    -- Локация
+    if q.locationName then
+        table.insert(metaLines, gold .. "Локация:" .. reset .. " " .. blue .. q.locationName .. reset)
+    end
+    
+    if #metaLines > 0 then
+        questMetaFS:SetSpacing(2)
+        questMetaFS:SetText(table.concat(metaLines, "\n"))
+    else
+        questMetaFS:SetText("")
+        questMetaFS:ClearAllPoints()
     end
 end
 
@@ -456,6 +505,12 @@ QuestDetails.LayoutQuestDetails = function()
         detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
     end
     
+    -- Добавляем метаданные квеста сразу после заголовка
+    if questMetaFS and questMetaFS:GetText() ~= "" then
+        questMetaFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
+        yOffset = yOffset - questMetaFS:GetStringHeight() - 8
+    end
+    
     if objectivesSummaryFS and objectivesSummaryFS:GetText() ~= "" then
         objectivesSummaryFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
         yOffset = yOffset - objectivesSummaryFS:GetStringHeight() - 6
@@ -559,6 +614,7 @@ QuestDetails.ShowQuestDetails = function(questID)
     
     QuestDetails.ClearQuestDetails()
     QuestDetails.SetupQuestTitle(questID, q)
+    QuestDetails.SetupQuestMeta(q)
     QuestDetails.SetupObjectivesSummary(q)
     QuestDetails.SetupDetailedObjectives(q)
     QuestDetails.SetupDescription(q)

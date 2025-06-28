@@ -13,10 +13,16 @@ f:SetScript("OnEvent", function(self, event, arg1, arg2)
 
         -- Подключение модулей согласно новым настройкам
         if MQSH_Config and MQSH_Config.enableSoundAnouncer then
-            if _G.SoundAnouncer_OnLoad then _G.SoundAnouncer_OnLoad() end
+            if _G.SoundAnouncer_OnLoad then 
+                _G.SoundAnouncer_OnLoad()
+            end
         end
         if MQSH_Config and MQSH_Config.enableHistory then
-            if _G.QuestDataBaseController_OnLoad then _G.QuestDataBaseController_OnLoad() end
+            if _G.QuestDataBaseController_OnLoad then 
+                _G.QuestDataBaseController_OnLoad()
+            end
+        else
+            print("MQSH: История квестов отключена в настройках")
         end
     end
 end)

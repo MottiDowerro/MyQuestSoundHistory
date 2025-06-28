@@ -6,6 +6,10 @@ local selectedButton
 local BUTTON_HEIGHT, BUTTON_TEXT_PADDING, BUTTON_SPACING
 local scrollPairs
 
+-- Переменные для сортировки
+local sortType = "level" -- "level", "title", "id"
+local sortOrder = "asc" -- "asc" для возрастания, "desc" для убывания
+
 -- Функции для инициализации переменных
 function QuestList.InitVars(vars)
     leftContent = vars.leftContent
@@ -16,6 +20,12 @@ function QuestList.InitVars(vars)
     BUTTON_TEXT_PADDING = vars.BUTTON_TEXT_PADDING
     BUTTON_SPACING = vars.BUTTON_SPACING
     scrollPairs = vars.scrollPairs
+end
+
+-- Функция для установки параметров сортировки
+function QuestList.SetSortParams(type, order)
+    sortType = type or "level"
+    sortOrder = order or "asc"
 end
 
 -- Функция для создания кнопки квеста
@@ -103,6 +113,42 @@ QuestList.BuildQuestList = function()
     for qID in pairs(questDB) do
         table.insert(questIDs, qID)
     end
+
+    -- Сортируем квесты по выбранному критерию
+    table.sort(questIDs, function(a, b)
+        local dataA = questDB[a]
+        local dataB = questDB[b]
+        
+        local valueA, valueB
+        
+        if sortType == "level" then
+            valueA = dataA.level or 0
+            valueB = dataB.level or 0
+        elseif sortType == "title" then
+            valueA = dataA.title or ("ID " .. tostring(a))
+            valueB = dataB.title or ("ID " .. tostring(b))
+        elseif sortType == "id" then
+            valueA = a
+            valueB = b
+        else
+            valueA = dataA.level or 0
+            valueB = dataB.level or 0
+        end
+        
+        if sortOrder == "asc" then
+            if sortType == "title" then
+                return valueA < valueB
+            else
+                return valueA < valueB
+            end
+        else
+            if sortType == "title" then
+                return valueA > valueB
+            else
+                return valueA > valueB
+            end
+        end
+    end)
 
     for index, qID in ipairs(questIDs) do
         local data = questDB[qID]
