@@ -1,7 +1,7 @@
 local QuestDetails = {}
 
 -- Вспомогательные переменные (будут передаваться через параметры или инициализироваться снаружи)
-local rewardItemFrames, objectiveItemFrames, rewardsVisibleCount, objectiveItemsVisibleCount
+local rewardItemFrames, rewardsVisibleCount
 local objectivesSummaryFS, objectivesTextFS, detailsFS, rewardsHeadingFS, rewardExtraFS, choiceLabelFS, descHeadingFS, detailsTitle
 local questMetaFS -- Новый элемент для метаданных квеста
 local rightContent, rightScrollFrame, rightScrollbar
@@ -9,9 +9,7 @@ local selectedButton
 
 function QuestDetails.InitVars(vars)
     rewardItemFrames = vars.rewardItemFrames
-    objectiveItemFrames = vars.objectiveItemFrames
     rewardsVisibleCount = vars.rewardsVisibleCount
-    objectiveItemsVisibleCount = vars.objectiveItemsVisibleCount
     objectivesSummaryFS = vars.objectivesSummaryFS
     objectivesTextFS = vars.objectivesTextFS
     detailsFS = vars.detailsFS
@@ -71,11 +69,6 @@ QuestDetails.ClearQuestDetails = function()
         f:ClearAllPoints()
     end
     rewardsVisibleCount = 0
-    for i, f in ipairs(objectiveItemFrames) do 
-        f:Hide() 
-        f:ClearAllPoints()
-    end
-    objectiveItemsVisibleCount = 0
     
     if rightContent then
         rightContent:SetHeight(1)
@@ -171,31 +164,12 @@ QuestDetails.SetupDetailedObjectives = function(q)
         end
 
         local objLines = {}
-        local objectiveItems = q.objectiveItems or {}
-        
-        -- Создаем словарь предметов-целей для быстрого поиска
-        local itemObjectives = {}
-        for _, item in ipairs(objectiveItems) do
-            itemObjectives[item.name] = item
-        end
-        
-        for _, obj in ipairs(objectives) do
-            -- Проверяем, является ли эта цель предметом
-            local isItemObjective = false
-            for itemName, itemData in pairs(itemObjectives) do
-                if obj:find(itemName, 1, true) then -- Точное совпадение имени предмета
-                    isItemObjective = true
-                    break
-                end
-            end
-            
-            if not isItemObjective then
-                -- Если это не предмет, добавляем как обычный текст
+        for i, obj in ipairs(objectives) do
+            local desc, type = select(1, GetQuestLogLeaderBoard(i))
+            if type ~= "item" then
                 table.insert(objLines, grey .. obj .. reset .. "\n")
             end
-            -- Если это предмет, пропускаем - он будет отображен отдельно
         end
-        
         local finalText = table.concat(objLines, "")
         objectivesTextFS:SetText(finalText)
     end
@@ -318,10 +292,6 @@ QuestDetails.CreateRewardItemFrame = function(index)
     return QuestDetails.CreateItemFrame(index, false)
 end
 
-QuestDetails.CreateObjectiveItemFrame = function(index)
-    return QuestDetails.CreateItemFrame(index, true)
-end
-
 QuestDetails.SetupItemTooltip = function(row)
     row:SetScript("OnEnter", function(self)
         if not self.highlight then
@@ -361,7 +331,6 @@ end
 
 -- Обратная совместимость - оставляем старые функции как алиасы
 QuestDetails.SetupRewardItemTooltip = QuestDetails.SetupItemTooltip
-QuestDetails.SetupObjectiveItemTooltip = QuestDetails.SetupItemTooltip
 
 QuestDetails.SetupRewardItems = function(q)
     if not q.rewards then 
@@ -462,41 +431,6 @@ QuestDetails.SetupExtraRewards = function(q)
     end
 end
 
-QuestDetails.SetupObjectiveItems = function(q)
-    local objectiveItems = q.objectiveItems or {}
-    if #objectiveItems == 0 then return end
-    
-    local ICON_SIZE = 40
-    local ITEM_HEIGHT = ICON_SIZE + 4
-    local frameWidth = rightScrollFrame:GetWidth()
-    
-    for i, item in ipairs(objectiveItems) do
-        local row = objectiveItemFrames[i]
-        if not row then
-            row = QuestDetails.CreateObjectiveItemFrame(i)
-            objectiveItemFrames[i] = row
-            QuestDetails.SetupObjectiveItemTooltip(row)
-        end
-        
-        QuestDetails.SetupItemFrame(row, item, frameWidth, ICON_SIZE, ITEM_HEIGHT)
-        
-        -- Устанавливаем количество на иконку (специфично для предметов-целей)
-        if item.count and item.count > 0 and row.countText then
-            row.countText:SetText(tostring(item.count))
-            row.countText:Show()
-        elseif row.countText then
-            row.countText:Hide()
-        end
-        
-        -- Применяем цвет к тексту (специфично для предметов-целей)
-        row.text:SetText("|cffffffff" .. (item.name or "") .. "|r")
-    end
-    
-    QuestDetails.HideUnusedFrames(objectiveItemFrames, #objectiveItems)
-    
-    objectiveItemsVisibleCount = #objectiveItems
-end
-
 QuestDetails.LayoutQuestDetails = function()
     -- Сбрасываем отступ к начальному значению для каждого квеста
     local yOffset = 0
@@ -526,38 +460,6 @@ QuestDetails.LayoutQuestDetails = function()
         objectivesTextFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
         yOffset = yOffset - objectivesTextFS:GetStringHeight() + 5
     end
-    
-    -- Размещение предметов-целей сразу после текстовых целей
-    if objectiveItemsVisibleCount > 0 then
-        yOffset = yOffset - 4 -- Дополнительный отступ перед предметами-целями
-        
-        local colSpacing, rowSpacing = 4, 4
-        local frameWidth = rightScrollFrame:GetWidth()
-        local itemW = (frameWidth - colSpacing) / 2
-        local currentIndex = 0
-        
-        for _, row in ipairs(objectiveItemFrames) do
-            if row:IsShown() then
-                local col = currentIndex % 2
-                local rowIdx = math.floor(currentIndex / 2)
-                local xOff = col * (itemW + colSpacing)
-                local yOff = yOffset - rowIdx * (row:GetHeight() + rowSpacing)
-                
-                row:SetWidth(itemW)
-                row:SetPoint("TOPLEFT", rightContent, "TOPLEFT", xOff, yOff)
-                currentIndex = currentIndex + 1
-            end
-        end
-        
-        local rows = math.ceil(objectiveItemsVisibleCount / 2)
-        if rows > 0 then
-            yOffset = yOffset - rows * (objectiveItemFrames[1]:GetHeight() + rowSpacing)
-        end
-    end
-    
-    local hasTextObjectives = objectivesText and objectivesText ~= "" and objectivesText:match("%S")
-    local hasObjectiveItems = objectiveItemsVisibleCount > 0
-    
     
     if descHeadingFS and descHeadingFS:GetText() ~= "" then
         descHeadingFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
@@ -624,19 +526,45 @@ QuestDetails.ShowQuestDetails = function(questID)
     QuestDetails.SetupDescription(q)
     QuestDetails.SetupRewardItems(q)
     QuestDetails.SetupExtraRewards(q)
-    QuestDetails.SetupObjectiveItems(q)
     
     QuestDetails.LayoutQuestDetails()
 end
 
 QuestDetails.HighlightQuestButton = function(btn)
-    if selectedButton and selectedButton.selTexture then
-        selectedButton.selTexture:Hide()
+    -- Убираем выделение с предыдущей кнопки
+    if selectedButton then
+        if selectedButton.selTexture then
+            selectedButton.selTexture:Hide()
+        end
+        -- Возвращаем нормальные цвета текста
+        if selectedButton.normalTextColor then
+            selectedButton.text:SetTextColor(selectedButton.normalTextColor.r, selectedButton.normalTextColor.g, selectedButton.normalTextColor.b)
+        end
+        if selectedButton.normalTypeColor then
+            selectedButton.typeText:SetTextColor(selectedButton.normalTypeColor.r, selectedButton.normalTypeColor.g, selectedButton.normalTypeColor.b)
+        end
     end
+    
     selectedButton = btn
-    if selectedButton and selectedButton.selTexture then
-        selectedButton.selTexture:Show()
+    _G.selectedButton = selectedButton -- Обновляем глобальную переменную
+    
+    -- Применяем выделение к новой кнопке
+    if selectedButton then
+        if selectedButton.selTexture then
+            selectedButton.selTexture:Show()
+            -- Устанавливаем фон цвета сложности (цвет который был у текста изначально)
+            if selectedButton.difficultyColor then
+                selectedButton.selTexture:SetVertexColor(selectedButton.difficultyColor.r, selectedButton.difficultyColor.g, selectedButton.difficultyColor.b, 0.3)
+            end
+        end
+        -- Делаем основной текст белым, метка типа остается своего цвета
+        selectedButton.text:SetTextColor(1, 1, 1)
+        if selectedButton.typeText and selectedButton.normalTypeColor then
+            selectedButton.typeText:SetTextColor(selectedButton.normalTypeColor.r, selectedButton.normalTypeColor.g, selectedButton.normalTypeColor.b)
+        end
     end
 end
 
+-- Экспортируем переменную selectedButton в глобальную область
+_G.selectedButton = selectedButton
 _G.QuestDetails = QuestDetails 

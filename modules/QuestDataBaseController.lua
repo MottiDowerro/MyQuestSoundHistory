@@ -25,7 +25,7 @@ local function GetQuestIDAndData(questLogIndex)
     local questID, questData = nil, nil
 
     WithQuestLogSelection(questLogIndex, function()
-        local title, level, _, _, _, _, _, qID = GetQuestLogTitle(questLogIndex)
+        local title, level, questType, _, _, _, _, qID = GetQuestLogTitle(questLogIndex)
         if qID and qID ~= 0 then
             questID = qID
         elseif GetQuestID then
@@ -35,11 +35,29 @@ local function GetQuestIDAndData(questLogIndex)
         if questID then
             local description, objectivesText = GetQuestLogQuestText()
 
-            -- Проверка на сюжетный квест (проверяем только начало описания для оптимизации)
-            local isStoryQuest = false
-            if description then
-                local storyMarker = "|cFFA52A2A<Обязательное сюжетное задание>|r"
-                isStoryQuest = description:sub(1, #storyMarker) == storyMarker
+            -- Определение группы квеста для группировки
+            local questGroup = nil
+            
+            -- Ищем заголовок выше в журнале квестов
+            for i = questLogIndex - 1, 1, -1 do
+                local headerTitle, headerLevel, headerType, _, _, _, _, headerQID, _, _, _, isHeader = GetQuestLogTitle(i)
+                if isHeader == nil then
+                    -- Нашли заголовок категории - используем его для группировки
+                    questGroup = headerTitle
+                    break
+                end
+            end
+            
+            -- Если заголовок не найден, questGroup остается nil (будет использована локация)
+            
+            -- Автоматически устанавливаем questType для квестов в группе "Сюжетные"
+            if questGroup and (questGroup:lower():find("сюжет") or questGroup:lower():find("story")) then
+                questType = "(Сюжетный)"
+                questGroup = nil
+            end
+
+            if questGroup and not questGroup:lower():find("особ") and questType and not questType:lower():find("рей") and not questType:lower():find("подземель") then
+                questGroup = nil
             end
 
             -- Локация и координаты для WoW 3.3.5
@@ -89,32 +107,12 @@ local function GetQuestIDAndData(questLogIndex)
 
             -- Цели
             local objectives = {}
-            local objectiveItems = {}
             local numObjectives = GetNumQuestLeaderBoards()
             if numObjectives and numObjectives > 0 then
                 for i = 1, numObjectives do
                     local desc, type = select(1, GetQuestLogLeaderBoard(i))
-                    if desc then
+                    if desc and type ~= "item" then
                         table.insert(objectives, desc)
-                        if type == "item" then
-                            local itemName, itemCount, itemID
-                            local itemPattern = "([^:]+):%s*(%d+)/(%d+)"
-                            local itemNameMatch, currentCount, totalCount = desc:match(itemPattern)
-                            if itemNameMatch then
-                                itemName = itemNameMatch:trim()
-                                itemCount = tonumber(totalCount)
-                                if itemName then
-                                    local _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, itemID = GetItemInfo(itemName)
-                                end
-                                if itemName and itemCount then
-                                    table.insert(objectiveItems, {
-                                        name = itemName,
-                                        count = itemCount,
-                                        itemID = itemID
-                                    })
-                                end
-                            end
-                        end
                     end
                 end
             end
@@ -161,13 +159,13 @@ local function GetQuestIDAndData(questLogIndex)
                 description     = description,
                 objectivesText  = objectivesText,
                 objectives      = objectives,
-                objectiveItems  = objectiveItems,
                 rewards         = rewards,
                 npcName         = npcName,
                 mainZone        = locationName,
                 coordinates     = coordinates,
                 timeAccepted    = timeAccepted,
-                isStoryQuest    = isStoryQuest,
+                questGroup      = questGroup,
+                questType       = questType,
             }
         end
     end)
@@ -183,7 +181,7 @@ local function QuestDataBaseController_OnLoad()
         if event == "QUEST_ACCEPTED" then
             local questLogIndex, questIDFromEvent = ...
             
-            C_Timer:After(0.15, function()
+            C_Timer:After(0.05, function()
                 local questID, questData = GetQuestIDAndData(questLogIndex)
                 if questID and questData and not MQSH_QuestDB[questID] then
                     MQSH_QuestDB[questID] = questData

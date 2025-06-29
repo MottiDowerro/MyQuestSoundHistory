@@ -3,7 +3,7 @@ local QuestDetails = _G.QuestDetails
 local QuestList = _G.QuestList
 
 -- Настройки отступов
-local OVERLAY_PADDING_LEFT_RIGHT = 5    -- Отступ от границ overlay
+local OVERLAY_PADDING_LEFT_RIGHT = 7    -- Отступ от границ overlay
 local OVERLAY_PADDING_TOP = 30           -- Отступ сверху
 local OVERLAY_PADDING_BOTTOM = 10        -- Отступ снизу
 local WINDOW_SPACING = 4                 -- Расстояние между элементами
@@ -34,10 +34,6 @@ local rewardItemFrames = {}
 local choiceLabelFS, rewardExtraFS
 local rewardsVisibleCount = 0
 local leftScrollbar, rightScrollbar
-
--- Переменные для предметов-целей
-local objectiveItemFrames = {}
-local objectiveItemsVisibleCount = 0
 
 -- Таблица пар скроллбаров для утилит
 local scrollPairs = {}
@@ -210,9 +206,7 @@ local function TryCreateQuestUI()
     -- Инициализируем переменные для модуля QuestDetails
     QuestDetails.InitVars({
         rewardItemFrames = rewardItemFrames,
-        objectiveItemFrames = objectiveItemFrames,
         rewardsVisibleCount = rewardsVisibleCount,
-        objectiveItemsVisibleCount = objectiveItemsVisibleCount,
         objectivesSummaryFS = objectivesSummaryFS,
         objectivesTextFS = objectivesTextFS,
         detailsFS = detailsFS,

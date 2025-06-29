@@ -90,9 +90,6 @@ QuestList.SetupSectionHeader = function(header, sectionName, isCollapsed, yOffse
     header:SetPoint("TOPRIGHT", leftContent, "TOPRIGHT", 0, yOffset)
     
     local displayName = sectionName
-    if sectionName == "story" then
-        displayName = "Сюжетные"
-    end
     
     header.text:SetText(displayName)
     
@@ -125,10 +122,18 @@ QuestList.CreateQuestButton = function(index, qID, data)
     btn.text.xOffset = BUTTON_TEXT_PADDING
     btn.text.yOffset = 0
 
+    -- Добавляем текст для метки типа квеста в правой части
+    btn.typeText = btn:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    btn.typeText:SetJustifyH("RIGHT")
+    btn.typeText:SetTextColor(0.8, 0.8, 0.8) -- Светло-серый цвет для метки
+    btn.typeText:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -BUTTON_TEXT_PADDING, 0)
+    btn.typeText:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -BUTTON_TEXT_PADDING, 0)
+
     btn.selTexture = btn:CreateTexture(nil, "BACKGROUND")
     btn.selTexture:SetAllPoints(btn)
-    btn.selTexture:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+    btn.selTexture:SetTexture("Interface\\Buttons\\WHITE8x8")
     btn.selTexture:SetBlendMode("ADD")
+    btn.selTexture:SetVertexColor(1, 1, 1, 0.3) -- Белый цвет с прозрачностью
     btn.selTexture:Hide()
     
     return btn
@@ -144,36 +149,84 @@ QuestList.SetupQuestButton = function(btn, index, qID, data, yOffset)
 
     local title = data.title or ("ID " .. tostring(qID))
     local level = data.level or "??"
+    local questType = data.questType
+    
+    -- Формируем метку типа квеста на основе questType
+    local typeLabel = ""
+    local typeColor = {0.8, 0.8, 0.8} -- По умолчанию светло-серый
+    if questType then
+        if questType:lower():find("сюжет") or questType:lower():find("story") then
+            typeLabel = "(Сюжетный)"
+            typeColor = {1, 0, 0}
+        elseif questType:lower():find("групп") or questType:lower():find("group") then
+            typeLabel = "(Групповой)"
+            typeColor = {0.60, 0.60, 1} -- Голубовато-фиолетовый цвет для групповых квестов
+        elseif questType:lower():find("подземель") or questType:lower():find("dungeon") then
+            typeLabel = "(Подземелье)"
+            typeColor = {0.2, 0.8, 0.6} -- Зеленовато-бирюзовый цвет для подземелий
+        elseif questType:lower():find("рей") or questType:lower():find("dungeon") then
+            typeLabel = "(Рейд)"
+            typeColor = {1, 0.50, 0} 
+        end
+    end
+    
     local color
     if type(level) == "number" and level > 0 then
         color = GetQuestDifficultyColor(level)
     else
         color = { r = 1, g = 0, b = 0 }
     end
+    
+    -- Сохраняем цвета для использования в обработчиках событий
+    btn.normalTextColor = {r = color.r, g = color.g, b = color.b}
+    btn.normalTypeColor = {r = typeColor[1], g = typeColor[2], b = typeColor[3]}
+    btn.difficultyColor = {r = color.r, g = color.g, b = color.b}
+    
+    -- Устанавливаем основной текст (название квеста)
     btn.text:SetTextColor(color.r, color.g, color.b)
-    btn.text:SetText(string.format("[%s] %s|r", level, title))
+    btn.text:SetText(string.format("[%s] %s", level, title))
+    
+    -- Устанавливаем метку типа в правой части
+    btn.typeText:SetText(typeLabel)
+    btn.typeText:SetTextColor(typeColor[1], typeColor[2], typeColor[3])
 
     btn:SetScript("OnMouseDown", function(self)
         self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset + 2, self.text.yOffset - 2)
         self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset + 2, self.text.yOffset - 2)
+        -- Метка типа не сдвигается при нажатии
     end)
 
     btn:SetScript("OnMouseUp", function(self)
         self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset, self.text.yOffset)
         self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset, self.text.yOffset)
+        -- Метка типа не сдвигается при нажатии
     end)
 
     btn:SetScript("OnClick", function(self)
         QuestDetails.HighlightQuestButton(self)
         QuestDetails.ShowQuestDetails(self.questID)
+        -- Если мышь наведена на кнопку, делаем метку типа белой
+        if self:IsMouseOver() then
+            self.typeText:SetTextColor(1, 1, 1)
+        end
     end)
 
     btn:SetScript("OnEnter", function(self)
+        -- При наведении: только текст белый, метка типа тоже белая
         self.text:SetTextColor(1, 1, 1)
+        self.typeText:SetTextColor(1, 1, 1)
     end)
 
     btn:SetScript("OnLeave", function(self)
-        self.text:SetTextColor(color.r, color.g, color.b)
+        -- При уходе мыши: возвращаем нормальные цвета только если квест не выбран
+        if _G.selectedButton ~= self then
+            self.text:SetTextColor(self.normalTextColor.r, self.normalTextColor.g, self.normalTextColor.b)
+            self.typeText:SetTextColor(self.normalTypeColor.r, self.normalTypeColor.g, self.normalTypeColor.b)
+        else
+            -- Если квест выбран, основной текст остается белым, метка типа возвращается к нормальному цвету
+            self.text:SetTextColor(1, 1, 1)
+            self.typeText:SetTextColor(self.normalTypeColor.r, self.normalTypeColor.g, self.normalTypeColor.b)
+        end
     end)
 
     btn:Show()
@@ -194,27 +247,18 @@ QuestList.BuildQuestList = function()
 
     local questDB = MQSH_QuestDB or {}
     
-    -- Группируем квесты по разделам
+    -- Группируем квесты по группам или локациям
     local sections = {}
-    local storyQuests = {}
     local locationQuests = {}
     
     for qID, data in pairs(questDB) do
-        if data.isStoryQuest then
-            table.insert(storyQuests, {id = qID, data = data})
-        else
-            -- Используем основную зону
-            local locationName = data.mainZone or "Неизвестная локация"
-            if not locationQuests[locationName] then
-                locationQuests[locationName] = {}
-            end
-            table.insert(locationQuests[locationName], {id = qID, data = data})
+        -- Используем questGroup для группировки, если nil - используем локацию
+        local sectionName = data.questGroup or data.mainZone or "Неизвестная локация"
+        
+        if not locationQuests[sectionName] then
+            locationQuests[sectionName] = {}
         end
-    end
-    
-    -- Добавляем сюжетные квесты в секции
-    if #storyQuests > 0 then
-        sections["story"] = storyQuests
+        table.insert(locationQuests[sectionName], {id = qID, data = data})
     end
     
     -- Добавляем квесты по локациям в секции
@@ -224,23 +268,12 @@ QuestList.BuildQuestList = function()
         end
     end
     
-    -- Сортируем секции (сюжетные всегда первыми)
+    -- Сортируем секции
     local sortedSections = {}
-    if sections["story"] then
-        table.insert(sortedSections, "story")
-    end
-    
-    local otherSections = {}
     for sectionName, _ in pairs(sections) do
-        if sectionName ~= "story" then
-            table.insert(otherSections, sectionName)
-        end
-    end
-    table.sort(otherSections)
-    
-    for _, sectionName in ipairs(otherSections) do
         table.insert(sortedSections, sectionName)
     end
+    table.sort(sortedSections)
     
     -- Сортируем квесты внутри каждой секции
     for sectionName, quests in pairs(sections) do
@@ -354,7 +387,7 @@ QuestList.CreateLeftWindow = function(overlay, windowWidth, windowHeight, leftWi
     leftWindow:SetSize(windowWidth, windowHeight)
     ScrollBarUtils.SetBackdrop(leftWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
 
-    local leftTitle = ScrollBarUtils.CreateFS(overlay, "GameFontNormal")
+    local leftTitle = ScrollBarUtils.CreateFS(overlay, "GameFontHighlight")
     leftTitle:SetPoint("BOTTOM", leftWindow, "TOP", 0, 5)
     leftTitle:SetJustifyH("CENTER")
     leftTitle:SetText("|cffFFD100Квесты|r")

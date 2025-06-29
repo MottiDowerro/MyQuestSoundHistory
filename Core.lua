@@ -7,8 +7,17 @@ f:SetScript("OnEvent", function(self, event, arg1, arg2)
     if event == "ADDON_LOADED" and arg1 == addonName then
         CreateSettingsPanel()
         SLASH_MYQUESTSOUNDHISTORY1 = "/MQSH"
+        SLASH_MYQUESTSOUNDHISTORYCLEAR1 = "/MQSHC"
         SlashCmdList["MYQUESTSOUNDHISTORY"] = function()
             InterfaceOptionsFrame_OpenToCategory(addonName)
+        end
+        SlashCmdList["MYQUESTSOUNDHISTORYCLEAR"] = function()
+            if MQSH_QuestDB then
+                MQSH_QuestDB = {}
+                print("MQSH: История квестов полностью очищена")
+            else
+                print("MQSH: База данных истории квестов пуста")
+            end
         end
 
         -- Подключение модулей согласно новым настройкам
