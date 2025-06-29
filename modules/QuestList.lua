@@ -3,7 +3,7 @@ local QuestList = {}
 -- Вспомогательные переменные (будут передаваться через параметры или инициализироваться снаружи)
 local leftContent, leftScrollFrame, leftScrollbar
 local selectedButton
-local BUTTON_HEIGHT, BUTTON_TEXT_PADDING, BUTTON_SPACING
+local BUTTON_HEIGHT, BUTTON_TEXT_PADDING_X, BUTTON_TEXT_PADDING_Y, BUTTON_SPACING
 local scrollPairs
 
 -- Переменные для сортировки
@@ -12,6 +12,7 @@ local sortOrder = "asc" -- "asc" для возрастания, "desc" для у
 
 -- Переменные для группировки
 local SECTION_HEADER_PADDING = 1
+local SECTION_SPACING = 1    -- Минимальное расстояние между секциями
 local collapsedSections = {} -- Хранит состояние свернутых разделов
 
 -- Функции для инициализации переменных
@@ -21,7 +22,8 @@ function QuestList.InitVars(vars)
     leftScrollbar = vars.leftScrollbar
     selectedButton = vars.selectedButton
     BUTTON_HEIGHT = vars.BUTTON_HEIGHT
-    BUTTON_TEXT_PADDING = vars.BUTTON_TEXT_PADDING
+    BUTTON_TEXT_PADDING_X = vars.BUTTON_TEXT_PADDING_X
+    BUTTON_TEXT_PADDING_Y = vars.BUTTON_TEXT_PADDING_Y
     BUTTON_SPACING = vars.BUTTON_SPACING
     scrollPairs = vars.scrollPairs
 end
@@ -45,26 +47,31 @@ QuestList.CreateSectionHeader = function(sectionName, isCollapsed)
     header.toggleBtn.text = header.toggleBtn:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     header.toggleBtn.text:SetJustifyH("CENTER")
     header.toggleBtn.text:SetTextColor(0.8, 0.8, 0.8)
-    header.toggleBtn.text:SetPoint("CENTER", header.toggleBtn, "CENTER", -8, 0)
+    
+    -- Получаем текущий шрифт и увеличиваем его размер
+    local font, size, flags = header.toggleBtn.text:GetFont()
+    header.toggleBtn.text:SetFont(font, size * 1.50, "") -- Убираем обводку
+    
+    header.toggleBtn.text:SetPoint("CENTER", header.toggleBtn, "CENTER", -6, 0)
     
     -- Текст заголовка (размер как у квестов)
     header.text = header:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     header.text:SetJustifyH("LEFT")
     header.text:SetTextColor(0.8, 0.8, 0.8) -- светлосерый
-    header.text:SetPoint("LEFT", header.toggleBtn, "RIGHT", -12, 0)
+    header.text:SetPoint("LEFT", header.toggleBtn, "RIGHT", -8, 0)
     header.text:SetPoint("RIGHT", header, "RIGHT", -SECTION_HEADER_PADDING, 0)
     
     -- Обработчики событий для заголовка
     header:SetScript("OnClick", function(self)
-        QuestList.ToggleSection(sectionName)
+        QuestList.ToggleSection(self.sectionName)
     end)
     
     header:SetScript("OnMouseDown", function(self)
-        self.text:SetPoint("LEFT", self.toggleBtn, "RIGHT", -10, -2)
+        self.text:SetPoint("LEFT", self.toggleBtn, "RIGHT", -6, -2)
     end)
     
     header:SetScript("OnMouseUp", function(self)
-        self.text:SetPoint("LEFT", self.toggleBtn, "RIGHT", -12, 0)
+        self.text:SetPoint("LEFT", self.toggleBtn, "RIGHT", -8, 0)
     end)
     
     header:SetScript("OnEnter", function(self)
@@ -77,7 +84,7 @@ QuestList.CreateSectionHeader = function(sectionName, isCollapsed)
     
     -- Обработчики событий для кнопки сворачивания
     header.toggleBtn:SetScript("OnClick", function(self, button)
-        QuestList.ToggleSection(sectionName)
+        QuestList.ToggleSection(self:GetParent().sectionName)
     end)
     
     return header
@@ -116,18 +123,19 @@ QuestList.CreateQuestButton = function(index, qID, data)
     btn.text:SetJustifyH("LEFT")
     btn.text:SetTextColor(1, 1, 1)
 
-    btn.text:SetPoint("TOPLEFT", btn, "TOPLEFT", BUTTON_TEXT_PADDING, 0)
-    btn.text:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -BUTTON_TEXT_PADDING, 0)
+    -- Начальные координаты для текста (будут изменяться в зависимости от наличия метки)
+    btn.text:SetPoint("TOPLEFT", btn, "TOPLEFT", BUTTON_TEXT_PADDING_X + 4, BUTTON_TEXT_PADDING_Y)
+    btn.text:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -BUTTON_TEXT_PADDING_X, BUTTON_TEXT_PADDING_Y)
 
-    btn.text.xOffset = BUTTON_TEXT_PADDING
-    btn.text.yOffset = 0
+    btn.text.xOffset = BUTTON_TEXT_PADDING_X + 4
+    btn.text.yOffset = BUTTON_TEXT_PADDING_Y
 
     -- Добавляем текст для метки типа квеста в правой части
     btn.typeText = btn:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     btn.typeText:SetJustifyH("RIGHT")
     btn.typeText:SetTextColor(0.8, 0.8, 0.8) -- Светло-серый цвет для метки
-    btn.typeText:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -BUTTON_TEXT_PADDING, 0)
-    btn.typeText:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -BUTTON_TEXT_PADDING, 0)
+    btn.typeText:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -BUTTON_TEXT_PADDING_X, BUTTON_TEXT_PADDING_Y)
+    btn.typeText:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -BUTTON_TEXT_PADDING_X, BUTTON_TEXT_PADDING_Y)
 
     btn.selTexture = btn:CreateTexture(nil, "BACKGROUND")
     btn.selTexture:SetAllPoints(btn)
@@ -189,16 +197,37 @@ QuestList.SetupQuestButton = function(btn, index, qID, data, yOffset)
     -- Устанавливаем метку типа в правой части
     btn.typeText:SetText(typeLabel)
     btn.typeText:SetTextColor(typeColor[1], typeColor[2], typeColor[3])
+    
+    -- Настраиваем позиционирование текста в зависимости от наличия метки
+    if typeLabel ~= "" then
+        -- Если есть метка, сокращаем область текста квеста
+        btn.text:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -95, BUTTON_TEXT_PADDING_Y) -- Оставляем 95 пикселей для метки
+        btn.text.hasTypeLabel = true
+    else
+        -- Если метки нет, текст занимает всю ширину
+        btn.text:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -BUTTON_TEXT_PADDING_X, BUTTON_TEXT_PADDING_Y)
+        btn.text.hasTypeLabel = false
+    end
 
     btn:SetScript("OnMouseDown", function(self)
-        self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset + 2, self.text.yOffset - 2)
-        self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset + 2, self.text.yOffset - 2)
+        if self.text.hasTypeLabel then
+            self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset + 2, self.text.yOffset - 2)
+            self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -95 + 2, self.text.yOffset - 2)
+        else
+            self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset + 2, self.text.yOffset - 2)
+            self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset + 2, self.text.yOffset - 2)
+        end
         -- Метка типа не сдвигается при нажатии
     end)
 
     btn:SetScript("OnMouseUp", function(self)
-        self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset, self.text.yOffset)
-        self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset, self.text.yOffset)
+        if self.text.hasTypeLabel then
+            self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset, self.text.yOffset)
+            self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -95, self.text.yOffset)
+        else
+            self.text:SetPoint("TOPLEFT", self, "TOPLEFT", self.text.xOffset, self.text.yOffset)
+            self.text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -self.text.xOffset, self.text.yOffset)
+        end
         -- Метка типа не сдвигается при нажатии
     end)
 
@@ -330,7 +359,7 @@ QuestList.BuildQuestList = function()
         end
         
         QuestList.SetupSectionHeader(header, sectionName, isCollapsed, currentYOffset)
-        currentYOffset = currentYOffset - BUTTON_HEIGHT + 2
+        currentYOffset = currentYOffset - BUTTON_HEIGHT + 1 -- Добавляем 2 пикселя между заголовком и квестами
         elementIndex = elementIndex + 1
         
         -- Если секция не свернута, показываем квесты
@@ -348,10 +377,8 @@ QuestList.BuildQuestList = function()
             end
         end
         
-        -- Добавляем отступ между разделами (минимальный)
-        if _ < #sortedSections then
-            currentYOffset = currentYOffset + 1
-        end
+        -- Добавляем небольшое расстояние между секциями (но не между заголовком и квестами)
+        currentYOffset = currentYOffset - SECTION_SPACING
     end
     
     -- Скрываем неиспользуемые элементы

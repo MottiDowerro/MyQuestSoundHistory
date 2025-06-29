@@ -18,9 +18,10 @@ local RIGHT_WINDOW_PADDING_X = 5         -- Отступ по X в правом 
 local RIGHT_WINDOW_PADDING_Y = 7         -- Отступ по Y в правом окне
 
 -- Настройки кнопок
-local BUTTON_HEIGHT = 17                 -- Высота кнопки
-local BUTTON_TEXT_PADDING = 5            -- Отступ текста по X
-local BUTTON_SPACING = 1                 -- Расстояние между кнопками
+local BUTTON_HEIGHT = 16                 -- Высота кнопки
+local BUTTON_TEXT_PADDING_X = 5          -- Отступ текста по X
+local BUTTON_TEXT_PADDING_Y = 0          -- Отступ текста по Y
+local BUTTON_SPACING = 0                 -- Расстояние между кнопками
 
 -- Переменные интерфейса
 local overlay
@@ -229,7 +230,8 @@ local function TryCreateQuestUI()
         leftScrollbar = leftScrollbar,
         selectedButton = selectedButton,
         BUTTON_HEIGHT = BUTTON_HEIGHT,
-        BUTTON_TEXT_PADDING = BUTTON_TEXT_PADDING,
+        BUTTON_TEXT_PADDING_X = BUTTON_TEXT_PADDING_X,
+        BUTTON_TEXT_PADDING_Y = BUTTON_TEXT_PADDING_Y,
         BUTTON_SPACING = BUTTON_SPACING,
         scrollPairs = scrollPairs
     })

@@ -41,7 +41,8 @@ local function GetQuestIDAndData(questLogIndex)
             -- Ищем заголовок выше в журнале квестов
             for i = questLogIndex - 1, 1, -1 do
                 local headerTitle, headerLevel, headerType, _, _, _, _, headerQID, _, _, _, isHeader = GetQuestLogTitle(i)
-                if isHeader == nil then
+                -- В WoW 3.3.5 заголовки имеют Level: 0, Type: nil, QID: nil
+                if headerLevel == 0 and headerType == nil and headerQID == nil then
                     -- Нашли заголовок категории - используем его для группировки
                     questGroup = headerTitle
                     break
