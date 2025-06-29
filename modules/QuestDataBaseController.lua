@@ -13,6 +13,13 @@ local function WithQuestLogSelection(index, func)
     end
 end
 
+-- Функция для очистки строки от лишних пробелов
+local function CleanLocationString(str)
+    if not str then return nil end
+    -- Убираем лишние пробелы в начале и конце, а также множественные пробелы внутри
+    return str:gsub("^%s*(.-)%s*$", "%1"):gsub("%s+", " ")
+end
+
 -- Функция для получения ID и данных о квесте
 local function GetQuestIDAndData(questLogIndex)
     local questID, questData = nil, nil
@@ -28,12 +35,16 @@ local function GetQuestIDAndData(questLogIndex)
         if questID then
             local description, objectivesText = GetQuestLogQuestText()
 
-            -- Локация и координаты для WoW 3.3.5
-            local locationName = GetRealZoneText() or GetZoneText()
-            local locationID = nil
-            if GetCurrentMapAreaID then
-                locationID = GetCurrentMapAreaID()
+            -- Проверка на сюжетный квест (проверяем только начало описания для оптимизации)
+            local isStoryQuest = false
+            if description then
+                local storyMarker = "|cFFA52A2A<Обязательное сюжетное задание>|r"
+                isStoryQuest = description:sub(1, #storyMarker) == storyMarker
             end
+
+            -- Локация и координаты для WoW 3.3.5
+            local locationName = CleanLocationString(GetRealZoneText() or GetZoneText())
+            
             local x, y = 0, 0
             if SetMapToCurrentZone then SetMapToCurrentZone() end
             if GetPlayerMapPosition then
@@ -43,13 +54,36 @@ local function GetQuestIDAndData(questLogIndex)
             end
             local coordinates = { x = x, y = y }
 
-            -- NPC
-            local target = UnitName("target")
+            -- NPC - улучшенное получение
             local npcName = nil
+            
+            -- Сначала проверяем цель
+            local target = UnitName("target")
             if target and not UnitIsPlayer("target") then
                 npcName = target
             end
+            
+            -- Если цель не подходит, проверяем GossipFrame (диалог с NPC)
+            if not npcName and GossipFrame and GossipFrame:IsShown() then
+                -- Пытаемся получить имя из заголовка GossipFrame
+                if GossipFrameTitleText then
+                    local titleText = GossipFrameTitleText:GetText()
+                    if titleText and titleText ~= "" then
+                        npcName = titleText
+                    end
+                end
+            end
+            
+            -- Если все еще нет NPC, проверяем последнего взаимодействовавшего NPC
             if not npcName then
+                -- Пытаемся получить из последнего события взаимодействия
+                if UnitExists("npc") then
+                    npcName = UnitName("npc")
+                end
+            end
+            
+            -- Если NPC не найден, устанавливаем значение по умолчанию
+            if not npcName or npcName == "" then
                 npcName = "Неизвестный NPC"
             end
 
@@ -130,10 +164,10 @@ local function GetQuestIDAndData(questLogIndex)
                 objectiveItems  = objectiveItems,
                 rewards         = rewards,
                 npcName         = npcName,
-                locationName    = locationName,
-                locationID      = locationID,
+                mainZone        = locationName,
                 coordinates     = coordinates,
                 timeAccepted    = timeAccepted,
+                isStoryQuest    = isStoryQuest,
             }
         end
     end)

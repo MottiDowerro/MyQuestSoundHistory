@@ -119,13 +119,17 @@ QuestDetails.SetupQuestMeta = function(q)
     end
     
     -- NPC, который дал квест
-    if q.npcName and q.npcName ~= "Неизвестный NPC" then
-        table.insert(metaLines, gold .. "От кого:" .. reset .. " " .. blue .. q.npcName .. reset)
+    if q.npcName then
+        local npcColor = blue
+        if q.npcName == "Неизвестный NPC" then
+            npcColor = grey
+        end
+        table.insert(metaLines, gold .. "От кого:" .. reset .. " " .. npcColor .. q.npcName .. reset)
     end
     
     -- Локация
-    if q.locationName then
-        table.insert(metaLines, gold .. "Локация:" .. reset .. " " .. blue .. q.locationName .. reset)
+    if q.mainZone then
+        table.insert(metaLines, gold .. "Локация:" .. reset .. " " .. blue .. q.mainZone .. reset)
     end
     
     if #metaLines > 0 then

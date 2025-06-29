@@ -91,6 +91,17 @@ local function CreatePlayButton(parent, anchorFrame, configKey, point, relativeT
     button:SetSize(24, 24)
     button:SetPoint(point, relativeTo, relativePoint, xOffset, yOffset)
     button:SetNormalTexture("Interface\\Common\\VoiceChat-Speaker")
+    
+    -- Добавляем эффект подсветки при наведении
+    button:SetHighlightTexture("Interface\\Common\\VoiceChat-Speaker")
+    local highlight = button:GetHighlightTexture()
+    highlight:SetVertexColor(1, 1, 1, 0.4) -- Белый цвет с прозрачностью
+    
+    -- Добавляем эффект нажатия (красный цвет)
+    button:SetPushedTexture("Interface\\Common\\VoiceChat-Speaker")
+    local pushed = button:GetPushedTexture()
+    pushed:SetVertexColor(1, 1, 1, 0.8)
+    
     button:SetScript("OnClick", function()
         PlaySoundFile(MQSH_Config[configKey])
     end)
