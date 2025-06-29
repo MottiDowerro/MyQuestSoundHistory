@@ -2,11 +2,10 @@
 ## Title: |cffC78FEA|cffD19DE2|cffDBAAEAMy|r|cffC78FEAQ|r|cffB471F2u|r|cffA053F6e|r|cff8C35FAst|r|cff7817FFSound|r|cff6400FFHistory|r
 ## Author: MottiDowerro
 ## Notes: Anounce sounds when questing and quest history /MQSH
-## Version: 1.2
+## Version: 1.3
 
 ## SavedVariables: MQSH_Config MQSH_QuestDB
 
-Localization.lua
 Settings.lua
 Core.lua
 modules\ScrollBarUtils.lua

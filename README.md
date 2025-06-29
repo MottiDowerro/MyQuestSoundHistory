@@ -1,55 +1,61 @@
 # MyQuestSoundHistory
 
-A World of Warcraft addon that announces sounds when questing and maintains quest history.
+Аддон для World of Warcraft, который объявляет звуки при выполнении квестов и ведет историю квестов.
 
-## Features
+## Функциональность
 
-### Core Functionality:
-- Sound notifications when accepting quests
-- History of accepted quests with detailed information
-- Display of quest rewards with icons and tooltips
-- **NEW**: Display of quest objective items
+### Основные возможности:
+- Звуковые уведомления при принятии квестов
+- История принятых квестов с детальной информацией
+- Отображение наград квестов с иконками и тултипами
+- **НОВОЕ**: Отображение предметов-целей квестов
+- **ОБНОВЛЕНО**: Аддон теперь работает только на русском языке
 
-### Quest Objective Items (New Feature)
+### Предметы-цели (новая функция)
 
-The addon now automatically detects and displays items that need to be collected to complete quests. For example, if a quest has an objective "Collect bandanas: 0/12", then:
+Аддон теперь автоматически определяет и отображает предметы, которые нужно собрать для выполнения квеста. Например, если в квесте есть цель "Добыть банданы: 0/12", то:
 
-- The item will be added to the quest database
-- In the quest history interface, objective items are displayed in the objectives section
-- Each item is shown with an icon, name, and required quantity
-- When hovering over an item, a tooltip with item information is displayed
-- Items are displayed as icons instead of text descriptions
+- Предмет будет добавлен в базу данных квеста
+- В интерфейсе истории квестов предметы-цели отображаются в секции целей
+- Каждый предмет показывается с иконкой, названием и требуемым количеством
+- При наведении на предмет отображается тултип с информацией о предмете
+- Предметы отображаются как иконки вместо текстовых описаний
 
-### Commands
+### Команды
 
-- `/MQSH` - Open addon settings
+- `/MQSH` - Открыть настройки аддона
 
-### Interface
+### Интерфейс
 
-In the quest log, a "History" button appears that opens a window with:
-- List of all accepted quests (left side)
-- Detailed information about the selected quest (right side):
-  - Quest description
-  - Quest objectives (text + item icons)
-  - Rewards (with icons)
-  - **Objective items (with icons and quantities)**
+В журнале квестов появляется кнопка "История", которая открывает окно с:
+- Списком всех принятых квестов (слева)
+- Детальной информацией о выбранном квесте (справа):
+  - Описание квеста
+  - Цели квеста (текст + иконки предметов)
+  - Награды (с иконками)
+  - **Предметы-цели (с иконками и количествами)**
 
-## Installation
+## Установка
 
-1. Copy the `MyQuestSoundHistory` folder to `World of Warcraft/Interface/AddOns/`
-2. Restart the game
-3. The addon will start working automatically
+1. Скопируйте папку `MyQuestSoundHistory` в директорию `World of Warcraft/Interface/AddOns/`
+2. Перезапустите игру
+3. Аддон автоматически начнет работать
 
-## Settings
+## Настройки
 
-Settings are available via the `/MQSH` command or through the interface menu:
-- Enable/disable sound notifications
-- Enable/disable quest history
+Настройки доступны через команду `/MQSH` или через меню интерфейса:
+- Включение/отключение звуковых уведомлений
+- Включение/отключение истории квестов
+- Выбор звуков для различных событий квестов
 
-## Version
+## Языковая поддержка
 
-Current version: 1.2
+Аддон работает только на русском языке. Все интерфейсные элементы и сообщения отображаются на русском языке.
 
-## Author
+## Версия
 
-MottiDowerro
+Текущая версия: 1.2
+
+## Автор
+
+MottiDowerro 

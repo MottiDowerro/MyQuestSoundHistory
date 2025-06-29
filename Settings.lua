@@ -111,15 +111,15 @@ end
 -- Главная панель
 local function CreateMainSettingsPanel()
     local panel = CreateFrame("Frame")
-    panel.name = L_("ADDON_TITLE")
+    panel.name = "MyQuestSoundHistory"
     panel:SetSize(700, 200)
 
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 20, -20)
-    title:SetText(L_("ADDON_TITLE"))
+    title:SetText("MyQuestSoundHistory")
 
-    local soundAnouncerCheck = CreateCheckbox(panel, L_("ENABLE_SOUND_ANOUNCER"), "enableSoundAnouncer", "TOPLEFT", title, "BOTTOMLEFT", 0, -20)
-    local historyCheck = CreateCheckbox(panel, L_("ENABLE_HISTORY"), "enableHistory", "TOPLEFT", soundAnouncerCheck, "BOTTOMLEFT", 0, -10)
+    local soundAnouncerCheck = CreateCheckbox(panel, "Модуль звукового анонсера квестов", "enableSoundAnouncer", "TOPLEFT", title, "BOTTOMLEFT", 0, -20)
+    local historyCheck = CreateCheckbox(panel, "Модуль истории квестов", "enableHistory", "TOPLEFT", soundAnouncerCheck, "BOTTOMLEFT", 0, -10)
 
     InterfaceOptions_AddCategory(panel)
 end
@@ -128,7 +128,7 @@ end
 local function CreateHistorySettingsPanel()
     local panel = CreateFrame("Frame")
     panel.name = "History"
-    panel.parent = L_("ADDON_TITLE")
+    panel.parent = "MyQuestSoundHistory"
     panel:SetSize(700, 200)
 
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -146,7 +146,7 @@ end
 local function CreateSoundAnouncerSettingsPanel()
     local panel = CreateFrame("Frame")
     panel.name = "Sound Anouncer"
-    panel.parent = L_("ADDON_TITLE")
+    panel.parent = "MyQuestSoundHistory"
     panel:SetSize(700, 400)
 
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -154,18 +154,18 @@ local function CreateSoundAnouncerSettingsPanel()
     title:SetText("Sound Anouncer Settings")
 
     -- WORK COMPLETE
-    local workCheck = CreateCheckbox(panel, L_("ENABLE_WORK_COMPLETE"), "enableWorkComplete", "TOPLEFT", title, "BOTTOMLEFT", 0, -20)
-    local workDropdown = CreateDropdown(panel, "workCompleteSound", workCheck, L_("WORK_COMPLETE_SOUND"), -15, -3, "TOPLEFT", "BOTTOMLEFT")
+    local workCheck = CreateCheckbox(panel, "Звук завершения квеста", "enableWorkComplete", "TOPLEFT", title, "BOTTOMLEFT", 0, -20)
+    local workDropdown = CreateDropdown(panel, "workCompleteSound", workCheck, "Завершения квеста", -15, -3, "TOPLEFT", "BOTTOMLEFT")
     local playWork = CreatePlayButton(panel, workDropdown, "workCompleteSound", "LEFT", workDropdown, "RIGHT", -4, 2)
 
     -- SINGLE COMPLETE
-    local singleCheck = CreateCheckbox(panel, L_("ENABLE_SINGLE_COMPLETE"), "enableSingleComplete", "TOPLEFT", workCheck, "BOTTOMLEFT", 0, -45)
-    local singleDropdown = CreateDropdown(panel, "singleCompleteSound", singleCheck, L_("SINGLE_COMPLETE_SOUND"), -15, -3, "TOPLEFT", "BOTTOMLEFT")
+    local singleCheck = CreateCheckbox(panel, "Звук завершения этапа", "enableSingleComplete", "TOPLEFT", workCheck, "BOTTOMLEFT", 0, -45)
+    local singleDropdown = CreateDropdown(panel, "singleCompleteSound", singleCheck, "Завершения этапа", -15, -3, "TOPLEFT", "BOTTOMLEFT")
     local playSingle = CreatePlayButton(panel, singleDropdown, "singleCompleteSound", "LEFT", singleDropdown, "RIGHT", -4, 2)
 
     -- PROGRESS SOUND
-    local progressCheck = CreateCheckbox(panel, L_("ENABLE_PROGRESS_SOUND"), "enableProgressSound", "TOPLEFT", singleCheck, "BOTTOMLEFT", 0, -45)
-    local progressDropdown = CreateDropdown(panel, "progressSound", progressCheck, L_("PROGRESS_SOUND"), -15, -3, "TOPLEFT", "BOTTOMLEFT")
+    local progressCheck = CreateCheckbox(panel, "Звук прогресса квеста", "enableProgressSound", "TOPLEFT", singleCheck, "BOTTOMLEFT", 0, -45)
+    local progressDropdown = CreateDropdown(panel, "progressSound", progressCheck, "Прогресс квеста", -15, -3, "TOPLEFT", "BOTTOMLEFT")
     local playProgress = CreatePlayButton(panel, progressDropdown, "progressSound", "LEFT", progressDropdown, "RIGHT", -4, 2)
 
     InterfaceOptions_AddCategory(panel)
