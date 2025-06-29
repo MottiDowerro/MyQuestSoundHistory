@@ -183,7 +183,7 @@ local function QuestDataBaseController_OnLoad()
         if event == "QUEST_ACCEPTED" then
             local questLogIndex, questIDFromEvent = ...
             
-            C_Timer:After(1, function()
+            C_Timer:After(0.15, function()
                 local questID, questData = GetQuestIDAndData(questLogIndex)
                 if questID and questData and not MQSH_QuestDB[questID] then
                     MQSH_QuestDB[questID] = questData
