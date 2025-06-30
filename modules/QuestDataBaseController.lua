@@ -21,7 +21,7 @@ local function CleanLocationString(str)
 end
 
 -- Функция для получения ID и данных о квесте
-local function GetQuestIDAndData(questLogIndex)
+local function GetQuestIDAndData(questLogIndex, currentNPC)
     local questID, questData = nil, nil
 
     WithQuestLogSelection(questLogIndex, function()
@@ -73,36 +73,13 @@ local function GetQuestIDAndData(questLogIndex)
             end
             local coordinates = { x = x, y = y }
 
-            -- NPC - улучшенное получение
+            -- NPC - улучшенное получение с использованием сохраненного NPC
             local npcName = nil
             
-            -- Сначала проверяем цель
-            local target = UnitName("target")
-            if target and not UnitIsPlayer("target") then
-                npcName = target
-            end
-            
-            -- Если цель не подходит, проверяем GossipFrame (диалог с NPC)
-            if not npcName and GossipFrame and GossipFrame:IsShown() then
-                -- Пытаемся получить имя из заголовка GossipFrame
-                if GossipFrameTitleText then
-                    local titleText = GossipFrameTitleText:GetText()
-                    if titleText and titleText ~= "" then
-                        npcName = titleText
-                    end
-                end
-            end
-            
-            -- Если все еще нет NPC, проверяем последнего взаимодействовавшего NPC
-            if not npcName then
-                -- Пытаемся получить из последнего события взаимодействия
-                if UnitExists("npc") then
-                    npcName = UnitName("npc")
-                end
-            end
-            
-            -- Если NPC не найден, устанавливаем значение по умолчанию
-            if not npcName or npcName == "" then
+            -- Сначала проверяем сохраненного NPC
+            if currentNPC and currentNPC ~= "" then
+                npcName = currentNPC
+            else
                 npcName = "Неизвестный NPC"
             end
 
@@ -176,19 +153,37 @@ end
 
 -- Обработчик события QUEST_ACCEPTED
 local function QuestDataBaseController_OnLoad()
+    -- Локальная переменная для хранения текущего NPC
+    local currentNPC = nil
+    local npcLocked = false -- Флаг блокировки NPC
+    
     local frame = CreateFrame("Frame")
     frame:RegisterEvent("QUEST_ACCEPTED")
+    frame:RegisterEvent("PLAYER_TARGET_CHANGED")
+    frame:RegisterEvent("QUEST_FINISHED")
+    
     frame:SetScript("OnEvent", function(self, event, ...)
         if event == "QUEST_ACCEPTED" then
             local questLogIndex, questIDFromEvent = ...
             
             C_Timer:After(0.05, function()
-                local questID, questData = GetQuestIDAndData(questLogIndex)
+                local questID, questData = GetQuestIDAndData(questLogIndex, currentNPC)
                 if questID and questData and not MQSH_QuestDB[questID] then
                     MQSH_QuestDB[questID] = questData
-                else
                 end
+                -- Сбрасываем NPC после принятия квеста
+                currentNPC = nil
+                npcLocked = false
             end)
+        elseif event == "PLAYER_TARGET_CHANGED" then
+            local target = UnitName("target")
+            if target and not UnitIsPlayer("target") and not npcLocked then
+                currentNPC = target
+                npcLocked = true -- Блокируем NPC
+            end
+        elseif event == "QUEST_FINISHED" then
+            -- Квест завершен или окно закрыто - разблокируем NPC
+            npcLocked = false
         end
     end)
 end
