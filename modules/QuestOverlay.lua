@@ -4,8 +4,8 @@ local QuestList = _G.QuestList
 
 -- Настройки отступов
 local OVERLAY_PADDING_LEFT_RIGHT = 7    -- Отступ от границ overlay
-local OVERLAY_PADDING_TOP = 30           -- Отступ сверху
-local OVERLAY_PADDING_BOTTOM = 10        -- Отступ снизу
+local OVERLAY_PADDING_TOP = 45           -- Отступ сверху
+local OVERLAY_PADDING_BOTTOM = 35        -- Отступ снизу
 local WINDOW_SPACING = 4                 -- Расстояние между элементами
 
 -- Настройки окон
@@ -40,20 +40,19 @@ local leftScrollbar, rightScrollbar
 local scrollPairs = {}
 
 -- Переменные для сортировки
-local sortType = "level" -- "level", "title", "id"
-local sortOrder = "asc" -- "asc" для возрастания, "desc" для убывания
 local sortDropdown, orderBtn
 
 -- Функция для создания выпадающего окна сортировки
 local function CreateSortDropdown(parent)
     local dropdown = CreateFrame("Frame", "MQSH_SortDropdown", parent, "UIDropDownMenuTemplate")
     
-    -- Создаем кнопку для переключения порядка сортировки
     local orderBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     orderBtn:SetSize(50, 20)
-    orderBtn:SetText("A->Z")
+    orderBtn:SetText(QuestList.GetSortOrder() == "asc" and "A->Z" or "Z->A")
     
     orderBtn:SetScript("OnClick", function(self)
+        local sortType = QuestList.GetSortType()
+        local sortOrder = QuestList.GetSortOrder()
         if sortOrder == "asc" then
             sortOrder = "desc"
             self:SetText("Z->A")
@@ -65,44 +64,57 @@ local function CreateSortDropdown(parent)
         QuestList.BuildQuestList()
     end)
     
-    -- Функция для инициализации выпадающего меню
     local function InitializeDropdown(self, level)
         level = level or 1
-        local info = UIDropDownMenu_CreateInfo()
-        
+        local sortType = QuestList.GetSortType()
+        local sortOrder = QuestList.GetSortOrder()
         if level == 1 then
+            local info = UIDropDownMenu_CreateInfo()
             info.text = "Сортировка"
             info.isTitle = true
             info.notCheckable = true
             UIDropDownMenu_AddButton(info, level)
-            
-            info.isTitle = false
-            info.func = function(self, arg1, arg2, checked)
-                sortType = arg1
-                UIDropDownMenu_SetSelectedValue(dropdown, arg1)
-                QuestList.SetSortParams(sortType, sortOrder)
-                QuestList.BuildQuestList()
-            end
-            
+
+            -- По уровню
+            info = UIDropDownMenu_CreateInfo()
             info.text = "По уровню"
             info.value = "level"
             info.checked = (sortType == "level")
+            info.func = function(self)
+                QuestList.SetSortParams("level", sortOrder)
+                UIDropDownMenu_SetSelectedValue(dropdown, "level")
+                QuestList.BuildQuestList()
+            end
             UIDropDownMenu_AddButton(info, level)
-            
+
+            -- По названию
+            info = UIDropDownMenu_CreateInfo()
             info.text = "По названию"
             info.value = "title"
             info.checked = (sortType == "title")
+            info.func = function(self)
+                QuestList.SetSortParams("title", sortOrder)
+                UIDropDownMenu_SetSelectedValue(dropdown, "title")
+                QuestList.BuildQuestList()
+            end
             UIDropDownMenu_AddButton(info, level)
-            
+
+            -- По ID
+            info = UIDropDownMenu_CreateInfo()
             info.text = "По ID"
             info.value = "id"
             info.checked = (sortType == "id")
+            info.func = function(self)
+                QuestList.SetSortParams("id", sortOrder)
+                UIDropDownMenu_SetSelectedValue(dropdown, "id")
+                QuestList.BuildQuestList()
+            end
             UIDropDownMenu_AddButton(info, level)
         end
     end
     
     UIDropDownMenu_Initialize(dropdown, InitializeDropdown)
-    UIDropDownMenu_SetSelectedValue(dropdown, sortType)
+    UIDropDownMenu_SetSelectedValue(dropdown, QuestList.GetSortType())
     UIDropDownMenu_SetWidth(dropdown, 120)
     
     return dropdown, orderBtn
@@ -111,15 +123,17 @@ end
 local function TryCreateQuestUI()
     if uiCreated or not QuestLogFrame then return end
 
-    local showBtn = CreateFrame("Button", "MQSH_ShowListButton", QuestLogFrame, "UIPanelButtonTemplate")
-    showBtn:SetSize(80, 22)
-    showBtn:SetText("История")
-    showBtn:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -150, -30)
+    local DataBtn = CreateFrame("Button", "MQSH_ShowListButton", QuestLogFrame, "UIPanelButtonTemplate")
+    DataBtn:SetSize(95, 22)
+    DataBtn:SetText("База данных")
+    DataBtn:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -150, -30)
+
+    
 
     overlay = CreateFrame("Frame", "MQSH_QuestOverlay", QuestLogFrame)
     overlay:SetPoint("TOPLEFT", QuestLogFrame, "TOPLEFT", 11, -12)
     overlay:SetPoint("BOTTOMRIGHT", QuestLogFrame, "BOTTOMRIGHT", -1, 11)
-    ScrollBarUtils.SetBackdrop(overlay, {0.10, 0.10, 0.10, 0.85}, {0, 0, 0, 0.95})
+    ScrollBarUtils.SetBackdrop(overlay, {0.10, 0.10, 0.10, 0.95}, {0, 0, 0, 0.95})
     overlay:SetFrameStrata("DIALOG")
     overlay:Hide()
 
@@ -132,15 +146,7 @@ local function TryCreateQuestUI()
         overlay:Hide()
         ScrollBarUtils.ResetScrollBars(scrollPairs)
         -- Сбрасываем параметры сортировки
-        sortType = "level"
-        sortOrder = "asc"
-        if sortDropdown then
-            UIDropDownMenu_SetSelectedValue(sortDropdown, sortType)
-        end
-        if orderBtn then
-            orderBtn:SetText("A->Z")
-        end
-        QuestList.SetSortParams(sortType, sortOrder)
+        QuestList.SetSortParams(QuestList.GetSortType(), QuestList.GetSortOrder())
     end)
 
     local overlayWidth = QuestLogFrame:GetWidth() - 12
@@ -162,29 +168,48 @@ local function TryCreateQuestUI()
     local elementY = -OVERLAY_PADDING_TOP
 
     -- Создаем левое окно через модуль QuestList
-    local leftWindow, leftScrollFrame, leftContent, leftScrollbar, leftTitle = QuestList.CreateLeftWindow(
+    local leftWindow, leftScrollFrame, leftContent, leftScrollbar, rightTitle = QuestList.CreateLeftWindow(
         overlay, windowWidth, windowHeight, leftWindowX, elementY, 
         LEFT_WINDOW_PADDING_X, LEFT_WINDOW_PADDING_Y, WINDOW_SPACING, BUTTON_HEIGHT, BUTTON_SPACING
     )
 
-    -- Изменяем заголовок на "История квестов" и центрируем его
-    leftTitle:SetText("|cffFFD100История квестов|r")
-    leftTitle:ClearAllPoints()
-    leftTitle:SetPoint("TOP", overlay, "TOP", 0, -2)
+    local rightTitle = ScrollBarUtils.CreateFS(overlay, "GameFontHighlight")
+    rightTitle:SetText("|cffFFD100История квестов|r")
+    rightTitle:ClearAllPoints()
+    rightTitle:SetPoint("TOP", overlay, "TOP", 0, -2)
 
     -- Создаем элементы сортировки в QuestOverlay
+    local sortBtnY = -OVERLAY_PADDING_TOP/2
+    -- Создаем текст для количества квестов
+    local questCountFS = overlay:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    questCountFS:SetPoint("TOPLEFT", overlay, "TOPLEFT", 7, sortBtnY)
+    questCountFS:SetJustifyH("LEFT")
+    if ScrollBarUtils and ScrollBarUtils.AddFontOutline then
+        ScrollBarUtils.AddFontOutline(questCountFS)
+    end
+    
+    local function UpdateQuestCountText()
+        local count = 0
+        if type(MQSH_QuestDB) == "table" then
+            for _ in pairs(MQSH_QuestDB) do count = count + 1 end
+        end
+        questCountFS:SetText("Квестов: " .. count)
+    end
+    UpdateQuestCountText()
+
+    -- Делаем дропдаун дочерним элементом для questCountFS
     sortDropdown, orderBtn = CreateSortDropdown(overlay)
-    sortDropdown:SetPoint("TOPLEFT", overlay, "TOPLEFT", 10, -2)
-    orderBtn:SetPoint("LEFT", sortDropdown, "RIGHT", 5, 0)
+    sortDropdown:SetPoint("LEFT", questCountFS, "RIGHT", 30, 0)
+    orderBtn:SetPoint("LEFT", sortDropdown, "RIGHT", -13, -3)
 
     -- Создаем правый ScrollFrame и скроллбар
     local rightWindow = CreateFrame("Frame", nil, overlay)
     rightWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", rightWindowX, elementY)
     rightWindow:SetSize(windowWidth, windowHeight)
-    ScrollBarUtils.SetBackdrop(rightWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
+    ScrollBarUtils.SetBackdrop(rightWindow, {0.07, 0.07, 0.07, 0.97}, {0, 0, 0, 0.95})
 
     rightScrollFrame, rightContent = ScrollBarUtils.CreateScrollFrame(rightWindow, RIGHT_WINDOW_PADDING_X, RIGHT_WINDOW_PADDING_Y)
-    rightScrollbar = ScrollBarUtils.CreateScrollBar(overlay, rightScrollFrame, rightWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, 60)
+    rightScrollbar = ScrollBarUtils.CreateScrollBar(rightWindow, rightScrollFrame, rightWindow, WINDOW_SPACING - 2, ScrollBarUtils.SCROLLBAR_WIDTH, 60)
 
     -- Инициализируем таблицу пар скроллбаров
     scrollPairs = {
@@ -236,20 +261,12 @@ local function TryCreateQuestUI()
         scrollPairs = scrollPairs
     })
 
-    showBtn:SetScript("OnClick", function()
+    DataBtn:SetScript("OnClick", function()
         if overlay:IsShown() then
             overlay:Hide()
             ScrollBarUtils.ResetScrollBars(scrollPairs)
             -- Сбрасываем параметры сортировки
-            sortType = "level"
-            sortOrder = "asc"
-            if sortDropdown then
-                UIDropDownMenu_SetSelectedValue(sortDropdown, sortType)
-            end
-            if orderBtn then
-                orderBtn:SetText("A->Z")
-            end
-            QuestList.SetSortParams(sortType, sortOrder)
+            QuestList.SetSortParams(QuestList.GetSortType(), QuestList.GetSortOrder())
         else
             overlay:Show()
         end
@@ -259,15 +276,7 @@ local function TryCreateQuestUI()
         overlay:Hide()
         ScrollBarUtils.ResetScrollBars(scrollPairs)
         -- Сбрасываем параметры сортировки
-        sortType = "level"
-        sortOrder = "asc"
-        if sortDropdown then
-            UIDropDownMenu_SetSelectedValue(sortDropdown, sortType)
-        end
-        if orderBtn then
-            orderBtn:SetText("A->Z")
-        end
-        QuestList.SetSortParams(sortType, sortOrder)
+        QuestList.SetSortParams(QuestList.GetSortType(), QuestList.GetSortOrder())
     end)
 
     overlay:SetScript("OnShow", function()
@@ -282,10 +291,40 @@ local function TryCreateQuestUI()
                 pair.scrollbar:SetValue(0) 
             end
         end
+        UpdateQuestCountText()
     end)
 
     -- Инициализируем скроллбары
     ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
+
+    -- После BuildQuestList тоже обновляем количество квестов
+    local oldBuildQuestList = QuestList.BuildQuestList
+    QuestList.BuildQuestList = function(...)
+        oldBuildQuestList(...)
+        UpdateQuestCountText()
+    end
+
+    -- После создания левого окна
+    -- Центрируем панель чекбокса между нижней границей левого окна и overlay
+    local leftWindowBottomY = elementY - windowHeight
+    local overlayBottomY = -overlayHeight + OVERLAY_PADDING_BOTTOM
+    local centerOffset = (overlayBottomY - leftWindowBottomY) / 2 - 2
+    local checkboxPanel = CreateFrame("Frame", nil, overlay)
+    checkboxPanel:SetPoint("TOPLEFT", leftWindow, "BOTTOMLEFT", 0, centerOffset)
+    checkboxPanel:SetPoint("TOPRIGHT", leftWindow, "BOTTOMRIGHT", 0, centerOffset)
+    checkboxPanel:SetHeight(28)
+    
+    local showWithoutGroupsCheck = CreateFrame("CheckButton", nil, checkboxPanel, "UICheckButtonTemplate")
+    showWithoutGroupsCheck:SetSize(22, 22)
+    showWithoutGroupsCheck:SetPoint("LEFT", checkboxPanel, "LEFT", 2, 0)
+    showWithoutGroupsCheck.text = showWithoutGroupsCheck:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    showWithoutGroupsCheck.text:SetPoint("LEFT", showWithoutGroupsCheck, "RIGHT", 5, 0)
+    showWithoutGroupsCheck.text:SetText("Без группировки")
+    showWithoutGroupsCheck:SetChecked(MQSH_Config and MQSH_Config.showWithoutGroups)
+    showWithoutGroupsCheck:SetScript("OnClick", function(self)
+        MQSH_Config.showWithoutGroups = self:GetChecked()
+        QuestList.BuildQuestList()
+    end)
 
     uiCreated = true
 end

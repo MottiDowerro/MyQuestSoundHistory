@@ -34,6 +34,15 @@ function QuestList.SetSortParams(type, order)
     sortOrder = order or "asc"
 end
 
+-- Новые функции для получения текущих параметров сортировки
+function QuestList.GetSortType()
+    return sortType
+end
+
+function QuestList.GetSortOrder()
+    return sortOrder
+end
+
 -- Функция для создания заголовка раздела
 QuestList.CreateSectionHeader = function(sectionName, isCollapsed)
     local header = CreateFrame("Button", nil, leftContent)
@@ -191,8 +200,14 @@ QuestList.SetupQuestButton = function(btn, index, qID, data, yOffset)
     btn.difficultyColor = {r = color.r, g = color.g, b = color.b}
     
     -- Устанавливаем основной текст (название квеста)
+    local displayLeft
+    if QuestList.GetSortType and QuestList.GetSortType() == "id" then
+        displayLeft = tostring(qID)
+    else
+        displayLeft = level
+    end
     btn.text:SetTextColor(color.r, color.g, color.b)
-    btn.text:SetText(string.format("[%s] %s", level, title))
+    btn.text:SetText(string.format("[%s] %s", displayLeft, title))
     
     -- Устанавливаем метку типа в правой части
     btn.typeText:SetText(typeLabel)
@@ -275,25 +290,29 @@ QuestList.BuildQuestList = function()
     end
 
     local questDB = MQSH_QuestDB or {}
+    local showWithoutGroups = MQSH_Config and MQSH_Config.showWithoutGroups
     
-    -- Группируем квесты по группам или локациям
     local sections = {}
-    local locationQuests = {}
-    
-    for qID, data in pairs(questDB) do
-        -- Используем questGroup для группировки, если nil - используем локацию
-        local sectionName = data.questGroup or data.mainZone or "Неизвестная локация"
-        
-        if not locationQuests[sectionName] then
-            locationQuests[sectionName] = {}
+    if showWithoutGroups then
+        -- Все квесты одной секцией
+        sections["Все квесты"] = {}
+        for qID, data in pairs(questDB) do
+            table.insert(sections["Все квесты"], {id = qID, data = data})
         end
-        table.insert(locationQuests[sectionName], {id = qID, data = data})
-    end
-    
-    -- Добавляем квесты по локациям в секции
-    for locationName, quests in pairs(locationQuests) do
-        if #quests > 0 then
-            sections[locationName] = quests
+    else
+        -- Группируем квесты по группам или локациям
+        local locationQuests = {}
+        for qID, data in pairs(questDB) do
+            local sectionName = data.questGroup or data.mainZone or "Неизвестная локация"
+            if not locationQuests[sectionName] then
+                locationQuests[sectionName] = {}
+            end
+            table.insert(locationQuests[sectionName], {id = qID, data = data})
+        end
+        for locationName, quests in pairs(locationQuests) do
+            if #quests > 0 then
+                sections[locationName] = quests
+            end
         end
     end
     
@@ -393,6 +412,11 @@ QuestList.BuildQuestList = function()
     
     ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
 
+    -- Обновляем количество квестов в оверлее, если функция есть
+    if overlay and overlay.UpdateQuestCount then
+        overlay.UpdateQuestCount()
+    end
+
     -- Выбираем первый квест, если ничего не выбрано
     if #sortedSections > 0 and (not selectedButton or not selectedButton:IsShown()) then
         local firstSection = sortedSections[1]
@@ -414,16 +438,12 @@ QuestList.CreateLeftWindow = function(overlay, windowWidth, windowHeight, leftWi
     leftWindow:SetSize(windowWidth, windowHeight)
     ScrollBarUtils.SetBackdrop(leftWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
 
-    local leftTitle = ScrollBarUtils.CreateFS(overlay, "GameFontHighlight")
-    leftTitle:SetPoint("BOTTOM", leftWindow, "TOP", 0, 5)
-    leftTitle:SetJustifyH("CENTER")
-    leftTitle:SetText("|cffFFD100Квесты|r")
 
     -- Создаем левый ScrollFrame и скроллбар
     local leftScrollFrame, leftContent = ScrollBarUtils.CreateScrollFrame(leftWindow, LEFT_WINDOW_PADDING_X, LEFT_WINDOW_PADDING_Y)
     local leftScrollbar = ScrollBarUtils.CreateScrollBar(overlay, leftScrollFrame, leftWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, (BUTTON_HEIGHT + BUTTON_SPACING) * 2)
     
-    return leftWindow, leftScrollFrame, leftContent, leftScrollbar, leftTitle
+    return leftWindow, leftScrollFrame, leftContent, leftScrollbar
 end
 
 -- Экспортируем модуль в глобальную область

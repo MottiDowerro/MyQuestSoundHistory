@@ -53,6 +53,23 @@ end
 
 --- Создает скроллбар для ScrollFrame
 function ScrollBarUtils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacing, width, scrollStep)
+    -- Кастомный фон и бордер под скроллбаром
+    -- local bgFrame = CreateFrame("Frame", nil, parent)
+    -- bgFrame:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", spacing, -14)
+    -- bgFrame:SetPoint("BOTTOMLEFT", anchorFrame, "BOTTOMRIGHT", spacing, 14)
+    -- bgFrame:SetWidth(width or ScrollBarUtils.SCROLLBAR_WIDTH + 2)
+    -- bgFrame:SetFrameLevel(parent:GetFrameLevel() + 1)
+    -- bgFrame:SetBackdrop({
+    --     bgFile = "Interface\\Buttons\\WHITE8x8",
+    --     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    --     tile = true,
+    --     tileSize = 8,
+    --     edgeSize = 8,
+    --     insets = { left = 0, right = 0, top = 0, bottom = 0 },
+    -- })
+    -- bgFrame:SetBackdropColor(0.15, 0.15, 0.15, 0.8)
+    -- bgFrame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+
     local scrollbar = CreateFrame("Slider", nil, parent, "UIPanelScrollBarTemplate")
     scrollbar:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", spacing, -14)
     scrollbar:SetPoint("BOTTOMLEFT", anchorFrame, "BOTTOMRIGHT", spacing, 14)
@@ -60,7 +77,7 @@ function ScrollBarUtils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacin
     scrollbar:SetValueStep(1)
     scrollbar:SetValue(0)
     scrollbar:SetMinMaxValues(0, 0)
-    
+
     -- Обработчик изменения значения
     scrollbar:SetScript("OnValueChanged", function(self, value)
         scrollFrame:SetVerticalScroll(value)
