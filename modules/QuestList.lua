@@ -253,6 +253,14 @@ QuestList.SetupQuestButton = function(btn, index, qID, data, yOffset)
         if self:IsMouseOver() then
             self.typeText:SetTextColor(1, 1, 1)
         end
+        -- Сброс только позиции скроллбара правого окна
+        if _G.QuestDetails and _G.QuestDetails.rightScrollFrame and _G.QuestDetails.rightScrollbar then
+            _G.QuestDetails.rightScrollFrame:SetVerticalScroll(0)
+            _G.QuestDetails.rightScrollbar:SetValue(0)
+        elseif scrollPairs and scrollPairs[2] then
+            if scrollPairs[2].scrollFrame then scrollPairs[2].scrollFrame:SetVerticalScroll(0) end
+            if scrollPairs[2].scrollbar then scrollPairs[2].scrollbar:SetValue(0) end
+        end
     end)
 
     btn:SetScript("OnEnter", function(self)
