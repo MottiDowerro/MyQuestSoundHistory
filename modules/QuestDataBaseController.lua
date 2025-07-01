@@ -155,35 +155,30 @@ end
 local function QuestDataBaseController_OnLoad()
     -- Локальная переменная для хранения текущего NPC
     local currentNPC = nil
-    local npcLocked = false -- Флаг блокировки NPC
     
     local frame = CreateFrame("Frame")
     frame:RegisterEvent("QUEST_ACCEPTED")
-    frame:RegisterEvent("PLAYER_TARGET_CHANGED")
-    frame:RegisterEvent("QUEST_FINISHED")
+    frame:RegisterEvent("GOSSIP_SHOW")
     
     frame:SetScript("OnEvent", function(self, event, ...)
-        if event == "QUEST_ACCEPTED" then
+        if event == "GOSSIP_SHOW" then
+            local target = UnitName("target")
+            if target and not UnitIsPlayer("target") then
+                currentNPC = target or nil
+            end
+        elseif event == "QUEST_ACCEPTED" then
             local questLogIndex, questIDFromEvent = ...
-            
             C_Timer:After(0.05, function()
-                local questID, questData = GetQuestIDAndData(questLogIndex, currentNPC)
+                local npcName = currentNPC
+                -- Если currentNPC нет, пробуем взять имя из таргета
+                if not npcName and UnitExists("target") and not UnitIsPlayer("target") then
+                    npcName = UnitName("target")
+                end
+                local questID, questData = GetQuestIDAndData(questLogIndex, npcName)
                 if questID and questData and not MQSH_QuestDB[questID] then
                     MQSH_QuestDB[questID] = questData
                 end
-                -- Сбрасываем NPC после принятия квеста
-                currentNPC = nil
-                npcLocked = false
             end)
-        elseif event == "PLAYER_TARGET_CHANGED" then
-            local target = UnitName("target")
-            if target and not UnitIsPlayer("target") and not npcLocked then
-                currentNPC = target
-                npcLocked = true -- Блокируем NPC
-            end
-        elseif event == "QUEST_FINISHED" then
-            -- Квест завершен или окно закрыто - разблокируем NPC
-            npcLocked = false
         end
     end)
 end
