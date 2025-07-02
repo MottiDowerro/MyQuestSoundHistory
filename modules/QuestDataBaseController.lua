@@ -159,27 +159,32 @@ local function QuestDataBaseController_OnLoad()
     local frame = CreateFrame("Frame")
     frame:RegisterEvent("QUEST_ACCEPTED")
     frame:RegisterEvent("GOSSIP_SHOW")
+    frame:RegisterEvent("QUEST_DETAIL")
+    frame:RegisterEvent("QUEST_FINISHED")
+    frame:RegisterEvent("GOSSIP_CLOSED")
     
     frame:SetScript("OnEvent", function(self, event, ...)
-        if event == "GOSSIP_SHOW" then
-            local target = UnitName("target")
-            if target and not UnitIsPlayer("target") then
-                currentNPC = target or nil
-            end
+        print(event)
+        if event == "GOSSIP_SHOW" or event == "QUEST_DETAIL" then
+            currentNPC = UnitName("npc")
         elseif event == "QUEST_ACCEPTED" then
             local questLogIndex, questIDFromEvent = ...
+            local npcName = currentNPC
             C_Timer:After(0.05, function()
-                local npcName = currentNPC
-                -- Если currentNPC нет, пробуем взять имя из таргета
-                if not npcName and UnitExists("target") and not UnitIsPlayer("target") then
-                    npcName = UnitName("target")
-                end
                 local questID, questData = GetQuestIDAndData(questLogIndex, npcName)
                 if questID and questData and not MQSH_QuestDB[questID] then
                     MQSH_QuestDB[questID] = questData
                 end
             end)
+        elseif event == "GOSSIP_CLOSED" then
+            currentNPC = nil
+        elseif event == "QUEST_FINISHED" then
+            C_Timer:After(0.1, function()   --должно быть больше чем задержка в QUEST_ACCEPTED
+                currentNPC = nil
+                print("NIL")
+            end)
         end
+        print(currentNPC)
     end)
 end
 
