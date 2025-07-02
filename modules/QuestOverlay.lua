@@ -110,6 +110,18 @@ local function CreateSortDropdown(parent)
                 QuestList.BuildQuestList()
             end
             UIDropDownMenu_AddButton(info, level)
+
+            -- По дате принятия
+            info = UIDropDownMenu_CreateInfo()
+            info.text = "По дате принятия"
+            info.value = "date"
+            info.checked = (sortType == "date")
+            info.func = function(self)
+                QuestList.SetSortParams("date", sortOrder)
+                UIDropDownMenu_SetSelectedValue(dropdown, "date")
+                QuestList.BuildQuestList()
+            end
+            UIDropDownMenu_AddButton(info, level)
         end
     end
     

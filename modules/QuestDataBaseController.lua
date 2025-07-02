@@ -164,7 +164,6 @@ local function QuestDataBaseController_OnLoad()
     frame:RegisterEvent("GOSSIP_CLOSED")
     
     frame:SetScript("OnEvent", function(self, event, ...)
-        print(event)
         if event == "GOSSIP_SHOW" or event == "QUEST_DETAIL" then
             currentNPC = UnitName("npc")
         elseif event == "QUEST_ACCEPTED" then
@@ -181,10 +180,8 @@ local function QuestDataBaseController_OnLoad()
         elseif event == "QUEST_FINISHED" then
             C_Timer:After(0.1, function()   --должно быть больше чем задержка в QUEST_ACCEPTED
                 currentNPC = nil
-                print("NIL")
             end)
         end
-        print(currentNPC)
     end)
 end
 

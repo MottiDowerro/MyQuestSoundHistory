@@ -7,7 +7,7 @@ local BUTTON_HEIGHT, BUTTON_TEXT_PADDING_X, BUTTON_TEXT_PADDING_Y, BUTTON_SPACIN
 local scrollPairs
 
 -- Переменные для сортировки
-local sortType = "level" -- "level", "title", "id"
+local sortType = "level" -- "level", "title", "id", "date"
 local sortOrder = "asc" -- "asc" для возрастания, "desc" для убывания
 
 -- Переменные для группировки
@@ -348,6 +348,10 @@ QuestList.BuildQuestList = function()
             elseif sortType == "id" then
                 valueA = a.id
                 valueB = b.id
+            elseif sortType == "date" then
+                -- Сортировка по дате принятия (timeAccepted) через сравнение строк
+                valueA = dataA.timeAccepted or ""
+                valueB = dataB.timeAccepted or ""
             else
                 valueA = dataA.level or 0
                 valueB = dataB.level or 0
