@@ -336,6 +336,14 @@ local function TryCreateQuestUI()
         QuestList.BuildQuestList()
     end)
 
+    -- Новый чекбокс "Текущий игрок" справа от предыдущего
+    local currentPlayerCheck = CreateFrame("CheckButton", nil, checkboxPanel, "UICheckButtonTemplate")
+    currentPlayerCheck:SetSize(22, 22)
+    currentPlayerCheck:SetPoint("LEFT", showWithoutGroupsCheck, "RIGHT", 105, 0)
+    currentPlayerCheck.text = currentPlayerCheck:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    currentPlayerCheck.text:SetPoint("LEFT", currentPlayerCheck, "RIGHT", 5, 0)
+    currentPlayerCheck.text:SetText("Текущий игрок")
+
     uiCreated = true
 end
 
