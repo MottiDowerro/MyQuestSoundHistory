@@ -178,7 +178,7 @@ local function QuestDataBaseController_OnLoad()
         elseif event == "GOSSIP_CLOSED" then
             currentNPC = nil
         elseif event == "QUEST_FINISHED" then
-            C_Timer:After(0.1, function()   --должно быть больше чем задержка в QUEST_ACCEPTED
+            C_Timer:After(0.35, function()   --должно быть больше чем задержка в QUEST_ACCEPTED на +- 0.30
                 currentNPC = nil
             end)
         end

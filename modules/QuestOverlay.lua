@@ -135,15 +135,10 @@ end
 local function TryCreateQuestUI()
     if uiCreated or not QuestLogFrame then return end
 
-    local HistoryBtn = CreateFrame("Button", "MQSH_ShowListButton", QuestLogFrame, "UIPanelButtonTemplate")
-    HistoryBtn:SetSize(65, 22)
-    HistoryBtn:SetText("История")
-    HistoryBtn:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -250, -34)
-
-    local DataBtn = CreateFrame("Button", "MQSH_ShowListButton", HistoryBtn, "UIPanelButtonTemplate")
-    DataBtn:SetSize(95, 22)
-    DataBtn:SetText("База данных")
-    DataBtn:SetPoint("TOPRIGHT", HistoryBtn, "TOPRIGHT", 98, 0)
+    local DataBtn = CreateFrame("Button", "MQSH_ShowListButton", QuestLogFrame, "UIPanelButtonTemplate")
+    DataBtn:SetSize(80, 22)
+    DataBtn:SetText("История")
+    DataBtn:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -150, -33)
 
     overlay = CreateFrame("Frame", "MQSH_QuestOverlay", QuestLogFrame)
     overlay:SetPoint("TOPLEFT", QuestLogFrame, "TOPLEFT", 11, -12)
