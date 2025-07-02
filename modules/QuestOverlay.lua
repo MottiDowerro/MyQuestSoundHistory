@@ -123,12 +123,15 @@ end
 local function TryCreateQuestUI()
     if uiCreated or not QuestLogFrame then return end
 
-    local DataBtn = CreateFrame("Button", "MQSH_ShowListButton", QuestLogFrame, "UIPanelButtonTemplate")
+    local HistoryBtn = CreateFrame("Button", "MQSH_ShowListButton", QuestLogFrame, "UIPanelButtonTemplate")
+    HistoryBtn:SetSize(65, 22)
+    HistoryBtn:SetText("История")
+    HistoryBtn:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -250, -34)
+
+    local DataBtn = CreateFrame("Button", "MQSH_ShowListButton", HistoryBtn, "UIPanelButtonTemplate")
     DataBtn:SetSize(95, 22)
     DataBtn:SetText("База данных")
-    DataBtn:SetPoint("TOPRIGHT", QuestLogFrame, "TOPRIGHT", -150, -30)
-
-    
+    DataBtn:SetPoint("TOPRIGHT", HistoryBtn, "TOPRIGHT", 98, 0)
 
     overlay = CreateFrame("Frame", "MQSH_QuestOverlay", QuestLogFrame)
     overlay:SetPoint("TOPLEFT", QuestLogFrame, "TOPLEFT", 11, -12)
@@ -199,8 +202,8 @@ local function TryCreateQuestUI()
 
     -- Делаем дропдаун дочерним элементом для questCountFS
     sortDropdown, orderBtn = CreateSortDropdown(overlay)
-    sortDropdown:SetPoint("LEFT", questCountFS, "RIGHT", 30, 0)
-    orderBtn:SetPoint("LEFT", sortDropdown, "RIGHT", -13, -3)
+    sortDropdown:SetPoint("LEFT", questCountFS, "RIGHT", 30, -1)
+    orderBtn:SetPoint("LEFT", sortDropdown, "RIGHT", -13, -1)
 
     -- Создаем правый ScrollFrame и скроллбар
     local rightWindow = CreateFrame("Frame", nil, overlay)
