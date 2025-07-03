@@ -14,9 +14,15 @@ f:SetScript("OnEvent", function(self, event, arg1, arg2)
         SlashCmdList["MYQUESTSOUNDHISTORYCLEAR"] = function()
             if MQSH_QuestDB then
                 MQSH_QuestDB = {}
-                print("MQSH: История квестов полностью очищена")
+                print("MQSH: База данных квестов полностью очищена")
             else
-                print("MQSH: База данных истории квестов пуста")
+                print("MQSH: База данных квестов пуста")
+            end
+            if MQSH_Char_HistoryDB then
+                MQSH_Char_HistoryDB = {}
+                print("MQSH: История квестов персонажа очищена")
+            else
+                print("MQSH: История квестов персонажа пуста")
             end
         end
 

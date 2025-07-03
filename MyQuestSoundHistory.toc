@@ -5,12 +5,14 @@
 ## Version: 1.3
 
 ## SavedVariables: MQSH_Config MQSH_QuestDB
+## SavedVariablesPerCharacter: MQSH_Char_HistoryDB
 
 Settings.lua
 Core.lua
 modules\ScrollBarUtils.lua
 modules\SoundAnouncer.lua
 modules\QuestDataBaseController.lua
+modules\QuestHistoryDataBaseController.lua
 modules\QuestDetails.lua
 modules\QuestList.lua
 modules\QuestOverlay.lua
