@@ -2,6 +2,10 @@ if not MQSH_QuestDB then
     MQSH_QuestDB = {}
 end
 
+if not MQSH_Char_HistoryDB then
+    MQSH_Char_HistoryDB = {}
+end
+
 -- Функция для безопасного выполнения действий с выбранным квестом
 local function WithQuestLogSelection(index, func)
     local prev = GetQuestLogSelection()
@@ -155,6 +159,7 @@ end
 local function QuestDataBaseController_OnLoad()
     -- Локальная переменная для хранения текущего NPC
     local currentNPC = nil
+    local questComplete = nil
     
     local frame = CreateFrame("Frame")
     frame:RegisterEvent("QUEST_ACCEPTED")
@@ -162,11 +167,17 @@ local function QuestDataBaseController_OnLoad()
     frame:RegisterEvent("QUEST_DETAIL")
     frame:RegisterEvent("QUEST_FINISHED")
     frame:RegisterEvent("GOSSIP_CLOSED")
+    frame:RegisterEvent("QUEST_COMPLETE")
     
     frame:SetScript("OnEvent", function(self, event, ...)
         if event == "GOSSIP_SHOW" or event == "QUEST_DETAIL" then
+            questComplete = false
+            currentNPC = UnitName("npc")
+        elseif event == "QUEST_COMPLETE" then
+            questComplete = true
             currentNPC = UnitName("npc")
         elseif event == "QUEST_ACCEPTED" then
+            questComplete = false
             local questLogIndex, questIDFromEvent = ...
             local npcName = currentNPC
             C_Timer:After(0.05, function()
@@ -178,10 +189,16 @@ local function QuestDataBaseController_OnLoad()
         elseif event == "GOSSIP_CLOSED" then
             currentNPC = nil
         elseif event == "QUEST_FINISHED" then
-            C_Timer:After(0.35, function()   --должно быть больше чем задержка в QUEST_ACCEPTED на +- 0.30
-                currentNPC = nil
-            end)
+            if questComplete == true then
+                print("ЛОГИКА СОХРАНЕНИЯ перчарактер")
+            else
+                questComplete = false
+                C_Timer:After(0.35, function()   --должно быть больше чем задержка в QUEST_ACCEPTED на +- 0.30
+                    currentNPC = nil
+                end)
+            end
         end
+        print(event)
     end)
 end
 
