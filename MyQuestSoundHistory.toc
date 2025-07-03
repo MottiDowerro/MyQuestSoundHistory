@@ -12,7 +12,6 @@ Core.lua
 modules\ScrollBarUtils.lua
 modules\SoundAnouncer.lua
 modules\QuestDataBaseController.lua
-modules\QuestHistoryDataBaseController.lua
 modules\QuestDetails.lua
 modules\QuestList.lua
 modules\QuestOverlay.lua
