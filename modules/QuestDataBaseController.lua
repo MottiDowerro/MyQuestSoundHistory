@@ -275,6 +275,7 @@ local function QuestDataBaseController_OnLoad()
             questComplete = false
             completedQuestID = nil  -- Сбрасываем ID завершенного квеста
             print("MQSH: QUEST_ACCEPTED - questComplete сброшен в false")
+            -- НЕ сбрасываем currentNPC здесь, так как он нужен для сохранения квеста
             C_Timer:After(0.05, function()
                 local questID, questData = GetQuestIDAndData(questLogIndex, npcName)
                 if questID and questData and not MQSH_QuestDB[questID] then
@@ -282,6 +283,9 @@ local function QuestDataBaseController_OnLoad()
                     print("MQSH: Квест " .. questID .. " добавлен в базу данных")
                     print("MQSH: QUEST_ACCEPTED - NPC в данных квеста: '" .. (questData.npcName or "nil") .. "'")
                 end
+                -- Сбрасываем currentNPC после сохранения квеста
+                currentNPC = nil
+                print("MQSH: QUEST_ACCEPTED - currentNPC сброшен после сохранения квеста")
             end)
             print("MQSH: QUEST_ACCEPTED - состояние после обработки - currentNPC: '" .. (currentNPC or "nil") .. "', questComplete: " .. tostring(questComplete) .. ", completedQuestID: " .. (completedQuestID or "nil"))
         elseif event == "GOSSIP_CLOSED" then
@@ -301,10 +305,10 @@ local function QuestDataBaseController_OnLoad()
                 print("MQSH: QUEST_FINISHED - состояние сброшено после сохранения")
                 print("MQSH: QUEST_FINISHED - состояние после обработки - currentNPC: '" .. (currentNPC or "nil") .. "', questComplete: " .. tostring(questComplete) .. ", completedQuestID: " .. (completedQuestID or "nil"))
             else
+                -- НЕ сбрасываем currentNPC здесь, так как он может понадобиться для следующего квеста
                 questComplete = false
-                currentNPC = nil
                 completedQuestID = nil  -- Сбрасываем ID завершенного квеста
-                print("MQSH: QUEST_FINISHED - questComplete сброшен в false")
+                print("MQSH: QUEST_FINISHED - questComplete сброшен в false, currentNPC сохранен: '" .. (currentNPC or "nil") .. "'")
                 print("MQSH: QUEST_FINISHED - состояние после обработки - currentNPC: '" .. (currentNPC or "nil") .. "', questComplete: " .. tostring(questComplete) .. ", completedQuestID: " .. (completedQuestID or "nil"))
             end
         end
