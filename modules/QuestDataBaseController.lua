@@ -188,7 +188,7 @@ local function QuestDataBaseController_OnLoad()
             local historyData = {
                 timeCompleted = date("%d.%m.%y %H:%M:%S"),
                 completionNPC = currentNPC or "Неизвестный NPC",
-                completionLocation = GetRealZoneText() or GetZoneText() or "Неизвестная локация"
+                completionLocation = CleanLocationString(GetRealZoneText() or GetZoneText())
             }
             
             -- Сохраняем в историю персонажа
