@@ -24,6 +24,8 @@ local function CleanLocationString(str)
     return str:gsub("^%s*(.-)%s*$", "%1"):gsub("%s+", " ")
 end
 
+-- Удаляем эти функции отсюда, они будут определены внутри QuestDataBaseController_OnLoad
+
 -- Функция для получения ID и данных о квесте
 local function GetQuestIDAndData(questLogIndex, currentNPC)
     local questID, questData = nil, nil
@@ -161,6 +163,45 @@ local function QuestDataBaseController_OnLoad()
     local currentNPC = nil
     local questComplete = nil
     
+    -- Локальные функции для работы с историей
+    local function GetInfoForHistory()
+        local questID = nil
+        local questData = nil
+        
+        -- Получаем quest ID только через GetQuestID()
+        if GetQuestID then
+            questID = GetQuestID()
+            if questID and questID ~= 0 then
+                -- Получаем данные из базы квестов
+                questData = MQSH_QuestDB[questID]
+            end
+        end
+        
+        return questID, questData
+    end
+
+    local function SaveQuestInfoToHistory()
+        local questID, questData = GetInfoForHistory()
+        
+        if questID then
+            -- Создаем минимальную запись для истории
+            local historyData = {
+                timeCompleted = date("%d.%m.%y %H:%M:%S"),
+                completionNPC = currentNPC or "Неизвестный NPC",
+                completionLocation = GetRealZoneText() or GetZoneText() or "Неизвестная локация"
+            }
+            
+            -- Сохраняем в историю персонажа
+            MQSH_Char_HistoryDB[questID] = historyData
+            
+            -- Выводим сообщение о сохранении (опционально)
+            if MQSH_Config and MQSH_Config.showCompletionMessages then
+                local title = questData and questData.title or ("ID " .. tostring(questID))
+                print("MQSH: Квест '" .. title .. "' добавлен в историю персонажа")
+            end
+        end
+    end
+    
     local frame = CreateFrame("Frame")
     frame:RegisterEvent("QUEST_ACCEPTED")
     frame:RegisterEvent("GOSSIP_SHOW")
@@ -171,13 +212,14 @@ local function QuestDataBaseController_OnLoad()
     
     frame:SetScript("OnEvent", function(self, event, ...)
         if event == "GOSSIP_SHOW" or event == "QUEST_DETAIL" then
-            questComplete = false
+            questComplete = 0
             currentNPC = UnitName("npc")
         elseif event == "QUEST_COMPLETE" then
-            questComplete = true
+            GetInfoForHistory()   -- при открытии окна завершения квеста получаем информацию о questID, локации в которой находимся. имя епрсонажа уже определяется в OnEvent
+            questComplete = 2
             currentNPC = UnitName("npc")
         elseif event == "QUEST_ACCEPTED" then
-            questComplete = false
+            questComplete = 0
             local questLogIndex, questIDFromEvent = ...
             local npcName = currentNPC
             C_Timer:After(0.05, function()
@@ -189,16 +231,18 @@ local function QuestDataBaseController_OnLoad()
         elseif event == "GOSSIP_CLOSED" then
             currentNPC = nil
         elseif event == "QUEST_FINISHED" then
-            if questComplete == true then
-                print("ЛОГИКА СОХРАНЕНИЯ перчарактер")
-            else
-                questComplete = false
-                C_Timer:After(0.35, function()   --должно быть больше чем задержка в QUEST_ACCEPTED на +- 0.30
+            C_Timer:After(0.35, function()   --должно быть больше чем задержка в QUEST_ACCEPTED на 0.30 +
+                if questComplete == 2 then
+                    questComplete = 1
+                elseif questComplete == 1 then
+                    SaveQuestInfoToHistory()  -- ЛОГИКА СОХРАНЕНИЯ в перчарактер (MQSH_Char_HistoryDB). отправляем сюда всю информацию из GetInfoForHistory(), 
+                                              -- плюс получаем время завершения квеста в этот момент, плюс текущего npc отправляем. всё это делаем MQSH_Char_HistoryDB[questID] = questDataForHistory
+                else
+                    questComplete = 0
                     currentNPC = nil
-                end)
-            end
+                end
+            end)
         end
-        print(event)
     end)
 end
 
