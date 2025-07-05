@@ -125,6 +125,28 @@ QuestDetails.SetupQuestMeta = function(q)
         table.insert(metaLines, gold .. "Локация:" .. reset .. " " .. blue .. q.mainZone .. reset)
     end
     
+    -- Добавляем информацию о завершении квеста (только если есть данные)
+    if q.timeCompleted then
+        table.insert(metaLines, gold .. "Завершен:" .. reset .. " " .. grey .. q.timeCompleted .. reset)
+    end
+    
+    if q.completionNPC then
+        local npcColor = blue
+        if q.completionNPC == "Неизвестный NPC" then
+            npcColor = grey
+        end
+        table.insert(metaLines, gold .. "Завершен у:" .. reset .. " " .. npcColor .. q.completionNPC .. reset)
+    end
+    
+    if q.completionLocation then
+        table.insert(metaLines, gold .. "Локация завершения:" .. reset .. " " .. blue .. q.completionLocation .. reset)
+    end
+    
+    if q.completionCoordinates and q.completionCoordinates.x and q.completionCoordinates.y then
+        local completionCoordText = string.format("%.2f, %.2f", q.completionCoordinates.x, q.completionCoordinates.y)
+        table.insert(metaLines, gold .. "Координаты завершения:" .. reset .. " " .. grey .. completionCoordText .. reset)
+    end
+    
     if #metaLines > 0 then
         questMetaFS:SetSpacing(2)
         questMetaFS:SetText(table.concat(metaLines, "\n"))
@@ -517,6 +539,38 @@ QuestDetails.ShowQuestDetails = function(questID)
     end
     
     local q = MQSH_QuestDB[questID]
+    
+    -- Проверяем состояние галочки "текущий персонаж"
+    local currentPlayerEnabled = true -- По умолчанию включено
+    if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay.currentPlayerCheck then
+        currentPlayerEnabled = _G.MQSH_QuestOverlay.currentPlayerCheck:GetChecked()
+    end
+    
+    -- Добавляем данные из истории персонажа только если галочка включена
+    if currentPlayerEnabled then
+        local charHistoryDB = MQSH_Char_HistoryDB or {}
+        if charHistoryDB[questID] then
+            -- Создаем копию данных квеста
+            local combinedData = {}
+            for k, v in pairs(q) do
+                combinedData[k] = v
+            end
+            -- Добавляем данные из истории персонажа
+            if charHistoryDB[questID].timeCompleted then
+                combinedData.timeCompleted = charHistoryDB[questID].timeCompleted
+            end
+            if charHistoryDB[questID].completionNPC then
+                combinedData.completionNPC = charHistoryDB[questID].completionNPC
+            end
+            if charHistoryDB[questID].completionLocation then
+                combinedData.completionLocation = charHistoryDB[questID].completionLocation
+            end
+            if charHistoryDB[questID].completionCoordinates then
+                combinedData.completionCoordinates = charHistoryDB[questID].completionCoordinates
+            end
+            q = combinedData
+        end
+    end
     
     QuestDetails.ClearQuestDetails()
     QuestDetails.SetupQuestTitle(questID, q)

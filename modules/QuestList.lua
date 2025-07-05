@@ -122,6 +122,10 @@ end
 QuestList.ToggleSection = function(sectionName)
     collapsedSections[sectionName] = not collapsedSections[sectionName]
     QuestList.BuildQuestList()
+    -- Обновляем количество квестов после сворачивания/разворачивания
+    if overlay and overlay.UpdateQuestCountText then
+        overlay.UpdateQuestCountText()
+    end
 end
 
 -- Функция для создания кнопки квеста
@@ -298,7 +302,40 @@ QuestList.BuildQuestList = function()
     end
 
     local questDB = MQSH_QuestDB or {}
+    local charHistoryDB = MQSH_Char_HistoryDB or {}
     local showWithoutGroups = MQSH_Config and MQSH_Config.showWithoutGroups
+    
+    -- Проверяем состояние галочки "текущий персонаж"
+    local currentPlayerEnabled = true -- По умолчанию включено
+    if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay.currentPlayerCheck then
+        currentPlayerEnabled = _G.MQSH_QuestOverlay.currentPlayerCheck:GetChecked()
+    end
+    
+    -- Если галочка "текущий персонаж" включена, фильтруем квесты
+    if currentPlayerEnabled then
+        local filteredQuestDB = {}
+        for questID, questData in pairs(questDB) do
+            if charHistoryDB[questID] then
+                -- Объединяем данные из обеих баз
+                local combinedData = {}
+                for k, v in pairs(questData) do
+                    combinedData[k] = v
+                end
+                -- Добавляем данные из истории персонажа
+                if charHistoryDB[questID].timeCompleted then
+                    combinedData.timeCompleted = charHistoryDB[questID].timeCompleted
+                end
+                if charHistoryDB[questID].completionLocation then
+                    combinedData.completionLocation = charHistoryDB[questID].completionLocation
+                end
+                if charHistoryDB[questID].completionCoordinates then
+                    combinedData.completionCoordinates = charHistoryDB[questID].completionCoordinates
+                end
+                filteredQuestDB[questID] = combinedData
+            end
+        end
+        questDB = filteredQuestDB
+    end
     
     local sections = {}
     if showWithoutGroups then
@@ -352,6 +389,22 @@ QuestList.BuildQuestList = function()
                 -- Сортировка по дате принятия (timeAccepted) через сравнение строк
                 valueA = dataA.timeAccepted or ""
                 valueB = dataB.timeAccepted or ""
+            elseif sortType == "completion" then
+                -- Сортировка по дате завершения (timeCompleted) через сравнение строк
+                -- Проверяем состояние галочки "текущий персонаж"
+                local currentPlayerEnabled = true -- По умолчанию включено
+                if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay.currentPlayerCheck then
+                    currentPlayerEnabled = _G.MQSH_QuestOverlay.currentPlayerCheck:GetChecked()
+                end
+                
+                if currentPlayerEnabled then
+                    valueA = dataA.timeCompleted or ""
+                    valueB = dataB.timeCompleted or ""
+                else
+                    -- Если галочка выключена, сортируем по дате принятия
+                    valueA = dataA.timeAccepted or ""
+                    valueB = dataB.timeAccepted or ""
+                end
             else
                 valueA = dataA.level or 0
                 valueB = dataB.level or 0
@@ -424,9 +477,9 @@ QuestList.BuildQuestList = function()
     
     ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
 
-    -- Обновляем количество квестов в оверлее, если функция есть
-    if overlay and overlay.UpdateQuestCount then
-        overlay.UpdateQuestCount()
+    -- Обновляем количество квестов в оверлее
+    if overlay and overlay.UpdateQuestCountText then
+        overlay.UpdateQuestCountText()
     end
 
     -- Выбираем первый квест, если ничего не выбрано
