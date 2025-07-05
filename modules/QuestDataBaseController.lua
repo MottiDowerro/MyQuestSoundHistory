@@ -193,12 +193,6 @@ local function QuestDataBaseController_OnLoad()
             
             -- Сохраняем в историю персонажа
             MQSH_Char_HistoryDB[questID] = historyData
-            
-            -- Выводим сообщение о сохранении (опционально)
-            if MQSH_Config and MQSH_Config.showCompletionMessages then
-                local title = questData and questData.title or ("ID " .. tostring(questID))
-                print("MQSH: Квест '" .. title .. "' добавлен в историю персонажа")
-            end
         end
     end
     
