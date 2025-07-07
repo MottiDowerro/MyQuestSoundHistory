@@ -8,12 +8,10 @@ local function SoundAnouncer_OnLoad()
     
     f:SetScript("OnEvent", function(self, event, arg1, arg2)
         if event == "QUEST_WATCH_UPDATE" then
-            -- Добавляем квест в список ожидающих проверки
             if arg1 then
                 pendingQuests[arg1] = true
             end
         elseif event == "QUEST_LOG_UPDATE" then
-            -- Проверяем только квесты, которые были обновлены
             for questId, _ in pairs(pendingQuests) do
                 if IsQuestWatched(questId) then
                     local numObjectives = GetNumQuestLeaderBoards(questId)
@@ -46,7 +44,6 @@ local function SoundAnouncer_OnLoad()
                         end
                     end
                 end
-                -- Удаляем квест из списка ожидающих
                 pendingQuests[questId] = nil
             end
         end

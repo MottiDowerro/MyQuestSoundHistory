@@ -6,24 +6,20 @@ local QuestList = _G.QuestList
 local function UpdateQuestCountText()
     local count = 0
     
-    -- Проверяем состояние галочки "текущий персонаж"
-    local currentPlayerEnabled = true -- По умолчанию включено
+    local currentPlayerEnabled = true
     if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay.currentPlayerCheck then
         currentPlayerEnabled = _G.MQSH_QuestOverlay.currentPlayerCheck:GetChecked()
     end
     
     if currentPlayerEnabled then
-        -- Если галочка включена, считаем только квесты из истории персонажа
         local charHistoryDB = MQSH_Char_HistoryDB or {}
         for _ in pairs(charHistoryDB) do count = count + 1 end
     else
-        -- Если галочка выключена, считаем все квесты из основной базы
         if type(MQSH_QuestDB) == "table" then
             for _ in pairs(MQSH_QuestDB) do count = count + 1 end
         end
     end
     
-    -- Находим элемент для отображения количества квестов
     if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay.questCountFS then
         _G.MQSH_QuestOverlay.questCountFS:SetText("Квестов: " .. count)
     end
@@ -33,25 +29,25 @@ end
 _G.UpdateQuestCountText = UpdateQuestCountText
 
 -- Настройки отступов
-local OVERLAY_PADDING_LEFT_RIGHT = 7    -- Отступ от границ overlay
-local OVERLAY_PADDING_TOP = 45           -- Отступ сверху
-local OVERLAY_PADDING_BOTTOM = 35        -- Отступ снизу
-local WINDOW_SPACING = 4                 -- Расстояние между элементами
+local OVERLAY_PADDING_LEFT_RIGHT = 7
+local OVERLAY_PADDING_TOP = 45
+local OVERLAY_PADDING_BOTTOM = 35
+local WINDOW_SPACING = 4
 
 -- Настройки окон
-local TITLE_TOP_OFFSET = 5               -- Отступ заголовка
+local TITLE_TOP_OFFSET = 5
 
 -- Отступы контента внутри окон
-local LEFT_WINDOW_PADDING_X = 6          -- Отступ по X в левом окне
-local LEFT_WINDOW_PADDING_Y = 3          -- Отступ по Y в левом окне
-local RIGHT_WINDOW_PADDING_X = 5         -- Отступ по X в правом окне
-local RIGHT_WINDOW_PADDING_Y = 7         -- Отступ по Y в правом окне
+local LEFT_WINDOW_PADDING_X = 6
+local LEFT_WINDOW_PADDING_Y = 3
+local RIGHT_WINDOW_PADDING_X = 5
+local RIGHT_WINDOW_PADDING_Y = 7
 
 -- Настройки кнопок
-local BUTTON_HEIGHT = 16                 -- Высота кнопки
-local BUTTON_TEXT_PADDING_X = 5          -- Отступ текста по X
-local BUTTON_TEXT_PADDING_Y = 0          -- Отступ текста по Y
-local BUTTON_SPACING = 0                 -- Расстояние между кнопками
+local BUTTON_HEIGHT = 16
+local BUTTON_TEXT_PADDING_X = 5
+local BUTTON_TEXT_PADDING_Y = 0
+local BUTTON_SPACING = 0
 
 -- Переменные интерфейса
 local overlay
@@ -66,10 +62,8 @@ local choiceLabelFS, rewardExtraFS
 local rewardsVisibleCount = 0
 local leftScrollbar, rightScrollbar
 
--- Таблица пар скроллбаров для утилит
 local scrollPairs = {}
 
--- Переменные для сортировки
 local sortDropdown, orderBtn
 
 -- Функция для создания выпадающего окна сортировки
@@ -106,7 +100,6 @@ local function CreateSortDropdown(parent)
             info.notCheckable = true
             UIDropDownMenu_AddButton(info, level)
 
-            -- По уровню
             info = UIDropDownMenu_CreateInfo()
             info.text = "По уровню"
             info.value = "level"
@@ -119,7 +112,6 @@ local function CreateSortDropdown(parent)
             end
             UIDropDownMenu_AddButton(info, level)
 
-            -- По названию
             info = UIDropDownMenu_CreateInfo()
             info.text = "По названию"
             info.value = "title"
@@ -132,7 +124,6 @@ local function CreateSortDropdown(parent)
             end
             UIDropDownMenu_AddButton(info, level)
 
-            -- По ID
             info = UIDropDownMenu_CreateInfo()
             info.text = "По ID"
             info.value = "id"
@@ -145,7 +136,6 @@ local function CreateSortDropdown(parent)
             end
             UIDropDownMenu_AddButton(info, level)
 
-            -- По дате принятия
             info = UIDropDownMenu_CreateInfo()
             info.text = "По дате принятия"
             info.value = "date"
@@ -158,7 +148,6 @@ local function CreateSortDropdown(parent)
             end
             UIDropDownMenu_AddButton(info, level)
 
-            -- По дате завершения (только для текущего персонажа)
             info = UIDropDownMenu_CreateInfo()
             info.text = "По дате завершения"
             info.value = "completion"
@@ -210,9 +199,6 @@ local function TryCreateQuestUI()
     local overlayWidth = QuestLogFrame:GetWidth() - 12
     local overlayHeight = QuestLogFrame:GetHeight() - 23
     
-    -- Правильный расчет: между краями и элементами только OVERLAY_PADDING_LEFT_RIGHT
-    -- Между элементами: WINDOW_SPACING
-    -- Структура: [OVERLAY_PADDING] [левое окно] [WINDOW_SPACING] [левый скроллбар] [WINDOW_SPACING] [правое окно] [WINDOW_SPACING] [правый скроллбар] [OVERLAY_PADDING]
     local totalFixedWidth = OVERLAY_PADDING_LEFT_RIGHT + ScrollBarUtils.SCROLLBAR_WIDTH + ScrollBarUtils.SCROLLBAR_WIDTH + OVERLAY_PADDING_LEFT_RIGHT
     local totalSpacing = WINDOW_SPACING * 3
     local availableWidth = overlayWidth - totalFixedWidth - totalSpacing
@@ -227,7 +213,6 @@ local function TryCreateQuestUI()
     
     local elementY = -OVERLAY_PADDING_TOP
 
-    -- Создаем левое окно через модуль QuestList
     local leftWindow, leftScrollFrame, leftContent, leftScrollbar, rightTitle = QuestList.CreateLeftWindow(
         overlay, windowWidth, windowHeight, leftWindowX, elementY, 
         LEFT_WINDOW_PADDING_X, LEFT_WINDOW_PADDING_Y, WINDOW_SPACING, BUTTON_HEIGHT, BUTTON_SPACING
@@ -238,9 +223,7 @@ local function TryCreateQuestUI()
     rightTitle:ClearAllPoints()
     rightTitle:SetPoint("TOP", overlay, "TOP", 0, -2)
 
-    -- Создаем элементы сортировки в QuestOverlay
     local sortBtnY = -OVERLAY_PADDING_TOP/2
-    -- Создаем текст для количества квестов
     local questCountFS = overlay:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     questCountFS:SetPoint("TOPLEFT", overlay, "TOPLEFT", 7, sortBtnY)
     questCountFS:SetJustifyH("LEFT")
@@ -248,21 +231,17 @@ local function TryCreateQuestUI()
         ScrollBarUtils.AddFontOutline(questCountFS)
     end
     
-    -- Делаем элемент доступным глобально
     overlay.questCountFS = questCountFS
     
-    -- Делаем функцию доступной для других модулей
     overlay.UpdateQuestCountText = UpdateQuestCountText
     _G.UpdateQuestCountText = UpdateQuestCountText
     
     UpdateQuestCountText()
 
-    -- Делаем дропдаун дочерним элементом для questCountFS
     sortDropdown, orderBtn = CreateSortDropdown(overlay)
     sortDropdown:SetPoint("LEFT", questCountFS, "RIGHT", 30, -1)
     orderBtn:SetPoint("LEFT", sortDropdown, "RIGHT", -13, -1)
 
-    -- Создаем правый ScrollFrame и скроллбар
     local rightWindow = CreateFrame("Frame", nil, overlay)
     rightWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", rightWindowX, elementY)
     rightWindow:SetSize(windowWidth, windowHeight)
@@ -271,7 +250,6 @@ local function TryCreateQuestUI()
     rightScrollFrame, rightContent = ScrollBarUtils.CreateScrollFrame(rightWindow, RIGHT_WINDOW_PADDING_X, RIGHT_WINDOW_PADDING_Y)
     rightScrollbar = ScrollBarUtils.CreateScrollBar(rightWindow, rightScrollFrame, rightWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, 60)
 
-    -- Инициализируем таблицу пар скроллбаров
     scrollPairs = {
         {scrollFrame = leftScrollFrame, scrollbar = leftScrollbar},
         {scrollFrame = rightScrollFrame, scrollbar = rightScrollbar}
@@ -285,11 +263,9 @@ local function TryCreateQuestUI()
     detailsFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
     detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -25)
 
-    -- Создаем элемент для метаданных квеста
     local questMetaFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
     questMetaFS:SetJustifyH("LEFT")
 
-    -- Инициализируем переменные для модуля QuestDetails
     QuestDetails.InitVars({
         rewardItemFrames = rewardItemFrames,
         rewardsVisibleCount = rewardsVisibleCount,
@@ -308,7 +284,6 @@ local function TryCreateQuestUI()
         selectedButton = selectedButton
     })
 
-    -- Инициализируем переменные для модуля QuestList
     QuestList.InitVars({
         leftContent = leftContent,
         leftScrollFrame = leftScrollFrame,
@@ -325,7 +300,6 @@ local function TryCreateQuestUI()
         if overlay:IsShown() then
             overlay:Hide()
             ScrollBarUtils.ResetScrollBars(scrollPairs)
-            -- Сбрасываем параметры сортировки
             QuestList.SetSortParams(QuestList.GetSortType(), QuestList.GetSortOrder())
         else
             overlay:Show()
@@ -335,14 +309,12 @@ local function TryCreateQuestUI()
     hooksecurefunc(QuestLogFrame, "Hide", function()
         overlay:Hide()
         ScrollBarUtils.ResetScrollBars(scrollPairs)
-        -- Сбрасываем параметры сортировки
         QuestList.SetSortParams(QuestList.GetSortType(), QuestList.GetSortOrder())
     end)
 
     overlay:SetScript("OnShow", function()
         QuestList.BuildQuestList()
         ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
-        -- Принудительно сбрасываем позицию скроллбаров в начало
         for _, pair in ipairs(scrollPairs) do
             if pair.scrollFrame then 
                 pair.scrollFrame:SetVerticalScroll(0) 
@@ -354,18 +326,14 @@ local function TryCreateQuestUI()
         UpdateQuestCountText()
     end)
 
-    -- Инициализируем скроллбары
     ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
 
-    -- После BuildQuestList тоже обновляем количество квестов
     local oldBuildQuestList = QuestList.BuildQuestList
     QuestList.BuildQuestList = function(...)
         oldBuildQuestList(...)
         UpdateQuestCountText()
     end
 
-    -- После создания левого окна
-    -- Центрируем панель чекбокса между нижней границей левого окна и overlay
     local leftWindowBottomY = elementY - windowHeight
     local overlayBottomY = -overlayHeight + OVERLAY_PADDING_BOTTOM
     local centerOffset = (overlayBottomY - leftWindowBottomY) / 2 - 2
@@ -374,7 +342,6 @@ local function TryCreateQuestUI()
     checkboxPanel:SetPoint("TOPRIGHT", leftWindow, "BOTTOMRIGHT", 0, centerOffset)
     checkboxPanel:SetHeight(28)
     
-    -- Создаем общую кнопку для чекбокса и текста
     local showWithoutGroupsButton = CreateFrame("Button", nil, checkboxPanel)
     showWithoutGroupsButton:SetPoint("LEFT", checkboxPanel, "LEFT", 2, 0)
     showWithoutGroupsButton:SetSize(120, 22)
@@ -387,7 +354,6 @@ local function TryCreateQuestUI()
     showWithoutGroupsCheck.text:SetText("Без группировки")
     showWithoutGroupsCheck:SetChecked(false)
     
-    -- Обработчик клика для всей кнопки
     showWithoutGroupsButton:SetScript("OnClick", function()
         showWithoutGroupsCheck:SetChecked(not showWithoutGroupsCheck:GetChecked())
         MQSH_Config.showWithoutGroups = showWithoutGroupsCheck:GetChecked()
@@ -395,14 +361,12 @@ local function TryCreateQuestUI()
         UpdateQuestCountText()
     end)
     
-    -- Обработчик клика для самого чекбокса
     showWithoutGroupsCheck:SetScript("OnClick", function(self)
         MQSH_Config.showWithoutGroups = self:GetChecked()
         QuestList.BuildQuestList()
         UpdateQuestCountText()
     end)
 
-    -- Новый чекбокс "Текущий игрок" справа от предыдущего
     local currentPlayerButton = CreateFrame("Button", nil, checkboxPanel)
     currentPlayerButton:SetPoint("LEFT", showWithoutGroupsButton, "RIGHT", 20, 0)
     currentPlayerButton:SetSize(140, 22)
@@ -413,22 +377,17 @@ local function TryCreateQuestUI()
     currentPlayerCheck.text = currentPlayerCheck:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     currentPlayerCheck.text:SetPoint("LEFT", currentPlayerCheck, "RIGHT", 5, 0)
     currentPlayerCheck.text:SetText("Текущий персонаж")
-    currentPlayerCheck:SetChecked(true) -- Включен по умолчанию
+    currentPlayerCheck:SetChecked(true)
     
-    -- Делаем чекбокс доступным для других модулей
     overlay.currentPlayerCheck = currentPlayerCheck
     
-    -- Обработчик клика для всей кнопки
     currentPlayerButton:SetScript("OnClick", function()
         currentPlayerCheck:SetChecked(not currentPlayerCheck:GetChecked())
-        -- Обновляем список квестов при изменении состояния
         QuestList.BuildQuestList()
         UpdateQuestCountText()
     end)
     
-    -- Обработчик клика для самого чекбокса
     currentPlayerCheck:SetScript("OnClick", function(self)
-        -- Обновляем список квестов при изменении состояния
         QuestList.BuildQuestList()
         UpdateQuestCountText()
     end)
