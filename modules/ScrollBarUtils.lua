@@ -1,16 +1,8 @@
--- ============================================================================
--- ScrollBarUtils.lua
--- Утилиты для работы со скроллбарами и общие функции
--- ============================================================================
-
 local ScrollBarUtils = {}
 
 -- Константы
-ScrollBarUtils.SCROLLBAR_WIDTH = 16               -- Ширина скроллбара
+ScrollBarUtils.SCROLLBAR_WIDTH = 16    -- Ширина скроллбара
 
--- ============================================================================
--- Функции для работы со скроллбарами
--- ============================================================================
 
 --- Обновляет скроллбар на основе содержимого ScrollFrame
 function ScrollBarUtils.UpdateScrollBar(scrollFrame, scrollbar)
@@ -21,12 +13,10 @@ function ScrollBarUtils.UpdateScrollBar(scrollFrame, scrollbar)
     local maxScroll = math.max(0, contentHeight - frameHeight)
     
     scrollbar:SetMinMaxValues(0, maxScroll)
-    scrollbar:Show() -- Всегда показываем скроллбар
+    scrollbar:Show()
     
-    -- Принудительно обновляем ползунок
     if maxScroll <= 0 then
         scrollbar:SetValue(0)
-        -- Дополнительно сбрасываем позицию прокрутки
         scrollFrame:SetVerticalScroll(0)
     end
 end
@@ -53,23 +43,6 @@ end
 
 --- Создает скроллбар для ScrollFrame
 function ScrollBarUtils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacing, width, scrollStep)
-    -- Кастомный фон и бордер под скроллбаром
-    -- local bgFrame = CreateFrame("Frame", nil, parent)
-    -- bgFrame:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", spacing, -14)
-    -- bgFrame:SetPoint("BOTTOMLEFT", anchorFrame, "BOTTOMRIGHT", spacing, 14)
-    -- bgFrame:SetWidth(width or ScrollBarUtils.SCROLLBAR_WIDTH + 2)
-    -- bgFrame:SetFrameLevel(parent:GetFrameLevel() + 1)
-    -- bgFrame:SetBackdrop({
-    --     bgFile = "Interface\\Buttons\\WHITE8x8",
-    --     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    --     tile = true,
-    --     tileSize = 8,
-    --     edgeSize = 8,
-    --     insets = { left = 0, right = 0, top = 0, bottom = 0 },
-    -- })
-    -- bgFrame:SetBackdropColor(0.15, 0.15, 0.15, 0.8)
-    -- bgFrame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
-
     local scrollbar = CreateFrame("Slider", nil, parent, "UIPanelScrollBarTemplate")
     scrollbar:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", spacing, -14)
     scrollbar:SetPoint("BOTTOMLEFT", anchorFrame, "BOTTOMRIGHT", spacing, 14)
@@ -78,12 +51,10 @@ function ScrollBarUtils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacin
     scrollbar:SetValue(0)
     scrollbar:SetMinMaxValues(0, 0)
 
-    -- Обработчик изменения значения
     scrollbar:SetScript("OnValueChanged", function(self, value)
         scrollFrame:SetVerticalScroll(value)
     end)
     
-    -- Обработчик колесика мыши
     if anchorFrame then
         anchorFrame:EnableMouseWheel(true)
         anchorFrame:SetScript("OnMouseWheel", function(self, delta)
@@ -110,9 +81,7 @@ function ScrollBarUtils.CreateScrollFrame(parent, paddingX, paddingY)
     return scrollFrame, content
 end
 
--- ============================================================================
 -- Общие утилиты
--- ============================================================================
 function ScrollBarUtils.SetBackdrop(frame, color, borderColor)
     frame:SetBackdrop({
         bgFile   = "Interface\\Buttons\\WHITE8x8",
@@ -141,7 +110,7 @@ end
 --- Убирает контур шрифта
 function ScrollBarUtils.RemoveFontOutline(fs)
     if not fs or type(fs) ~= "table" or not fs.GetFont then
-        return -- Если объект не является FontString, просто выходим
+        return
     end
     local fontFile, fontSize = fs:GetFont()
     if fontFile then
@@ -151,7 +120,7 @@ end
 
 function ScrollBarUtils.AddFontOutline(fs)
     if not fs or type(fs) ~= "table" or not fs.GetFont then
-        return -- Если объект не является FontString, просто выходим
+        return
     end
     local fontFile, fontSize = fs:GetFont()
     if fontFile then

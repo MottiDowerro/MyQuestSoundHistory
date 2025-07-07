@@ -305,23 +305,19 @@ QuestList.BuildQuestList = function()
     local charHistoryDB = MQSH_Char_HistoryDB or {}
     local showWithoutGroups = MQSH_Config and MQSH_Config.showWithoutGroups
     
-    -- Проверяем состояние галочки "текущий персонаж"
-    local currentPlayerEnabled = true -- По умолчанию включено
+    local currentPlayerEnabled = true
     if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay.currentPlayerCheck then
         currentPlayerEnabled = _G.MQSH_QuestOverlay.currentPlayerCheck:GetChecked()
     end
     
-    -- Если галочка "текущий персонаж" включена, фильтруем квесты
     if currentPlayerEnabled then
         local filteredQuestDB = {}
         for questID, questData in pairs(questDB) do
             if charHistoryDB[questID] then
-                -- Объединяем данные из обеих баз
                 local combinedData = {}
                 for k, v in pairs(questData) do
                     combinedData[k] = v
                 end
-                -- Добавляем данные из истории персонажа
                 if charHistoryDB[questID].timeCompleted then
                     combinedData.timeCompleted = charHistoryDB[questID].timeCompleted
                 end
@@ -339,13 +335,11 @@ QuestList.BuildQuestList = function()
     
     local sections = {}
     if showWithoutGroups then
-        -- Все квесты одной секцией
         sections["Все квесты"] = {}
         for qID, data in pairs(questDB) do
             table.insert(sections["Все квесты"], {id = qID, data = data})
         end
     else
-        -- Группируем квесты по группам или локациям
         local locationQuests = {}
         for qID, data in pairs(questDB) do
             local sectionName = data.questGroup or data.mainZone or "Неизвестная локация"
@@ -361,14 +355,12 @@ QuestList.BuildQuestList = function()
         end
     end
     
-    -- Сортируем секции
     local sortedSections = {}
     for sectionName, _ in pairs(sections) do
         table.insert(sortedSections, sectionName)
     end
     table.sort(sortedSections)
     
-    -- Сортируем квесты внутри каждой секции
     for sectionName, quests in pairs(sections) do
         table.sort(quests, function(a, b)
             local dataA = a.data
@@ -386,13 +378,10 @@ QuestList.BuildQuestList = function()
                 valueA = a.id
                 valueB = b.id
             elseif sortType == "date" then
-                -- Сортировка по дате принятия (timeAccepted) через сравнение строк
                 valueA = dataA.timeAccepted or ""
                 valueB = dataB.timeAccepted or ""
             elseif sortType == "completion" then
-                -- Сортировка по дате завершения (timeCompleted) через сравнение строк
-                -- Проверяем состояние галочки "текущий персонаж"
-                local currentPlayerEnabled = true -- По умолчанию включено
+                local currentPlayerEnabled = true
                 if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay.currentPlayerCheck then
                     currentPlayerEnabled = _G.MQSH_QuestOverlay.currentPlayerCheck:GetChecked()
                 end
@@ -401,7 +390,6 @@ QuestList.BuildQuestList = function()
                     valueA = dataA.timeCompleted or ""
                     valueB = dataB.timeCompleted or ""
                 else
-                    -- Если галочка выключена, сортируем по дате принятия
                     valueA = dataA.timeAccepted or ""
                     valueB = dataB.timeAccepted or ""
                 end
@@ -426,7 +414,6 @@ QuestList.BuildQuestList = function()
         end)
     end
     
-    -- Строим интерфейс
     local currentYOffset = 0
     local elementIndex = 1
     
@@ -434,7 +421,6 @@ QuestList.BuildQuestList = function()
         local quests = sections[sectionName]
         local isCollapsed = collapsedSections[sectionName]
         
-        -- Создаем заголовок секции
         local header = leftContent.elements[elementIndex]
         if not header or not header.isHeader then
             header = QuestList.CreateSectionHeader(sectionName, isCollapsed)
@@ -443,10 +429,9 @@ QuestList.BuildQuestList = function()
         end
         
         QuestList.SetupSectionHeader(header, sectionName, isCollapsed, currentYOffset)
-        currentYOffset = currentYOffset - BUTTON_HEIGHT + 1 -- Добавляем 2 пикселя между заголовком и квестами
+        currentYOffset = currentYOffset - BUTTON_HEIGHT + 1
         elementIndex = elementIndex + 1
         
-        -- Если секция не свернута, показываем квесты
         if not isCollapsed then
             for i, questInfo in ipairs(quests) do
                 local btn = leftContent.elements[elementIndex]
@@ -461,33 +446,28 @@ QuestList.BuildQuestList = function()
             end
         end
         
-        -- Добавляем небольшое расстояние между секциями (но не между заголовком и квестами)
         currentYOffset = currentYOffset - SECTION_SPACING
     end
     
-    -- Скрываем неиспользуемые элементы
     for i = elementIndex, #leftContent.elements do
         leftContent.elements[i]:Hide()
     end
     
-    -- Устанавливаем общую высоту контента
     local totalHeight = -currentYOffset
     leftContent:SetHeight(totalHeight)
     leftScrollFrame:SetVerticalScroll(0)
     
     ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
 
-    -- Обновляем количество квестов в оверлее
     if overlay and overlay.UpdateQuestCountText then
         overlay.UpdateQuestCountText()
     end
 
-    -- Выбираем первый квест, если ничего не выбрано
     if #sortedSections > 0 and (not selectedButton or not selectedButton:IsShown()) then
         local firstSection = sortedSections[1]
         local firstQuests = sections[firstSection]
         if #firstQuests > 0 and not collapsedSections[firstSection] then
-            local firstBtn = leftContent.elements[2] -- Первый элемент после заголовка
+            local firstBtn = leftContent.elements[2]
             if firstBtn and not firstBtn.isHeader then
                 QuestDetails.HighlightQuestButton(firstBtn)
                 QuestDetails.ShowQuestDetails(firstBtn.questID)
@@ -503,13 +483,10 @@ QuestList.CreateLeftWindow = function(overlay, windowWidth, windowHeight, leftWi
     leftWindow:SetSize(windowWidth, windowHeight)
     ScrollBarUtils.SetBackdrop(leftWindow, {0.08, 0.08, 0.08, 0.93}, {0, 0, 0, 0.95})
 
-
-    -- Создаем левый ScrollFrame и скроллбар
     local leftScrollFrame, leftContent = ScrollBarUtils.CreateScrollFrame(leftWindow, LEFT_WINDOW_PADDING_X, LEFT_WINDOW_PADDING_Y)
     local leftScrollbar = ScrollBarUtils.CreateScrollBar(overlay, leftScrollFrame, leftWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, (BUTTON_HEIGHT + BUTTON_SPACING) * 2)
     
     return leftWindow, leftScrollFrame, leftContent, leftScrollbar
 end
 
--- Экспортируем модуль в глобальную область
 _G.QuestList = QuestList 

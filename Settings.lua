@@ -92,12 +92,10 @@ local function CreatePlayButton(parent, anchorFrame, configKey, point, relativeT
     button:SetPoint(point, relativeTo, relativePoint, xOffset, yOffset)
     button:SetNormalTexture("Interface\\Common\\VoiceChat-Speaker")
     
-    -- Добавляем эффект подсветки при наведении
     button:SetHighlightTexture("Interface\\Common\\VoiceChat-Speaker")
     local highlight = button:GetHighlightTexture()
-    highlight:SetVertexColor(1, 1, 1, 0.4) -- Белый цвет с прозрачностью
+    highlight:SetVertexColor(1, 1, 1, 0.4)
     
-    -- Добавляем эффект нажатия (красный цвет)
     button:SetPushedTexture("Interface\\Common\\VoiceChat-Speaker")
     local pushed = button:GetPushedTexture()
     pushed:SetVertexColor(1, 1, 1, 0.8)
@@ -153,17 +151,14 @@ local function CreateSoundAnouncerSettingsPanel()
     title:SetPoint("TOPLEFT", 20, -20)
     title:SetText("Sound Anouncer Settings")
 
-    -- WORK COMPLETE
     local workCheck = CreateCheckbox(panel, "Звук завершения квеста", "enableWorkComplete", "TOPLEFT", title, "BOTTOMLEFT", 0, -20)
     local workDropdown = CreateDropdown(panel, "workCompleteSound", workCheck, "Завершения квеста", -15, -3, "TOPLEFT", "BOTTOMLEFT")
     local playWork = CreatePlayButton(panel, workDropdown, "workCompleteSound", "LEFT", workDropdown, "RIGHT", -4, 2)
 
-    -- SINGLE COMPLETE
     local singleCheck = CreateCheckbox(panel, "Звук завершения этапа", "enableSingleComplete", "TOPLEFT", workCheck, "BOTTOMLEFT", 0, -45)
     local singleDropdown = CreateDropdown(panel, "singleCompleteSound", singleCheck, "Завершения этапа", -15, -3, "TOPLEFT", "BOTTOMLEFT")
     local playSingle = CreatePlayButton(panel, singleDropdown, "singleCompleteSound", "LEFT", singleDropdown, "RIGHT", -4, 2)
 
-    -- PROGRESS SOUND
     local progressCheck = CreateCheckbox(panel, "Звук прогресса квеста", "enableProgressSound", "TOPLEFT", singleCheck, "BOTTOMLEFT", 0, -45)
     local progressDropdown = CreateDropdown(panel, "progressSound", progressCheck, "Прогресс квеста", -15, -3, "TOPLEFT", "BOTTOMLEFT")
     local playProgress = CreatePlayButton(panel, progressDropdown, "progressSound", "LEFT", progressDropdown, "RIGHT", -4, 2)

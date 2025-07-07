@@ -142,7 +142,6 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
     return questID, questData
 end
 
--- Обработчик события QUEST_ACCEPTED
 local function QuestDataBaseController_OnLoad()
     local currentNPC = nil
     local questComplete = false
@@ -154,7 +153,7 @@ local function QuestDataBaseController_OnLoad()
         if GetQuestID then
             questID = GetQuestID()
             if questID and questID ~= 0 then
-                -- Получаем данные из базы квестов
+
                 questData = MQSH_QuestDB[questID]
             end
         end
@@ -162,16 +161,14 @@ local function QuestDataBaseController_OnLoad()
         return questID, questData
     end
 
-    -- Добавляем переменную для хранения ID завершенного квеста
     local completedQuestID = nil
 
     local function SaveQuestInfoToHistory()
-        local questID = completedQuestID  -- Используем сохраненный ID завершенного квеста
+        local questID = completedQuestID
         local questData = nil
         
         if questID then
-            questData = MQSH_QuestDB[questID]  -- Получаем данные из базы квестов
-            -- Получаем координаты при завершении квеста
+            questData = MQSH_QuestDB[questID]
             local x, y = 0, 0
             if SetMapToCurrentZone then SetMapToCurrentZone() end
             if GetPlayerMapPosition then
@@ -181,7 +178,6 @@ local function QuestDataBaseController_OnLoad()
             end
             local completionCoordinates = { x = x, y = y }
             
-            -- Создаем минимальную запись для истории
             local completionNPC = currentNPC or "Неизвестный NPC"
             local historyData = {
                 timeCompleted = date("%d.%m.%y %H:%M:%S"),
@@ -190,7 +186,6 @@ local function QuestDataBaseController_OnLoad()
                 completionCoordinates = completionCoordinates
             }
             
-            -- Сохраняем в историю персонажа
             MQSH_Char_HistoryDB[questID] = historyData
         end
     end
@@ -207,15 +202,15 @@ local function QuestDataBaseController_OnLoad()
         if event == "GOSSIP_SHOW" or event == "QUEST_DETAIL" then
             currentNPC = UnitName("npc")
         elseif event == "QUEST_COMPLETE" then
-            local questID, questData = GetInfoForHistory()   -- при открытии окна завершения квеста получаем информацию о questID, локации в которой находимся. имя епрсонажа уже определяется в OnEvent
-            completedQuestID = questID  -- Сохраняем ID завершенного квеста
+            local questID, questData = GetInfoForHistory()
+            completedQuestID = questID
             questComplete = true
             currentNPC = UnitName("npc")
         elseif event == "QUEST_ACCEPTED" then
             local questLogIndex, questIDFromEvent = ...
             local npcName = currentNPC
             questComplete = false
-            completedQuestID = nil  -- Сбрасываем ID завершенного квеста
+            completedQuestID = nil
             C_Timer:After(0.05, function()
                 local questID, questData = GetQuestIDAndData(questLogIndex, npcName)
                 if questID and questData and not MQSH_QuestDB[questID] then
@@ -227,14 +222,13 @@ local function QuestDataBaseController_OnLoad()
             currentNPC = nil
         elseif event == "QUEST_FINISHED" then
             if questComplete == true then
-                SaveQuestInfoToHistory()  -- ЛОГИКА СОХРАНЕНИЯ в перчарактер (MQSH_Char_HistoryDB). отправляем сюда всю информацию из GetInfoForHistory(), 
-                 -- плюс получаем время завершения квеста в этот момент, плюс текущего npc отправляем. всё это делаем MQSH_Char_HistoryDB[questID] = questDataForHistory
+                SaveQuestInfoToHistory()
                 questComplete = false
                 currentNPC = nil
-                completedQuestID = nil  -- Сбрасываем ID завершенного квеста
+                completedQuestID = nil
             else
                 questComplete = false
-                completedQuestID = nil  -- Сбрасываем ID завершенного квеста
+                completedQuestID = nil
             end
         end
     end)
