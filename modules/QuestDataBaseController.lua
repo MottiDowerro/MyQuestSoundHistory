@@ -142,6 +142,21 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
     return questID, questData
 end
 
+-- Helper to safely delay execution using OnUpdate
+local function SafeAfter(delaySeconds, callback)
+    local frame = CreateFrame("Frame")
+    local elapsed = 0
+    frame:SetScript("OnUpdate", function(self, delta)
+        elapsed = elapsed + delta
+        if elapsed >= delaySeconds then
+            self:SetScript("OnUpdate", nil)
+            if callback then
+                pcall(callback)
+            end
+        end
+    end)
+end
+
 local function QuestDataBaseController_OnLoad()
     local currentNPC = nil
     local questComplete = false
@@ -211,7 +226,7 @@ local function QuestDataBaseController_OnLoad()
             local npcName = currentNPC
             questComplete = false
             completedQuestID = nil
-            C_Timer:After(0.05, function()
+            SafeAfter(0.05, function()
                 local questID, questData = GetQuestIDAndData(questLogIndex, npcName)
                 if questID and questData and not MQSH_QuestDB[questID] then
                     MQSH_QuestDB[questID] = questData
