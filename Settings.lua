@@ -40,9 +40,11 @@ local function CreateCheckbox(parent, text, configKey, point, relativeTo, relati
     local checkbox = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
     checkbox:SetSize(26, 26)
     checkbox:SetPoint(point, relativeTo, relativePoint, xOffset, yOffset)
-    checkbox.text:SetFontObject("GameFontHighlight")
-    checkbox.text:SetText(text)
-    checkbox.text:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
+    -- Backwards compatibility: разные версии WoW используют разные имена
+    local textObj = checkbox.Text or checkbox.text
+    textObj:SetFontObject("GameFontHighlight")
+    textObj:SetText(text)
+    textObj:SetPoint("LEFT", checkbox, "RIGHT", 5, 0)
     checkbox:SetChecked(MQSH_Config[configKey])
     checkbox:SetScript("OnClick", function(self)
         MQSH_Config[configKey] = self:GetChecked()
