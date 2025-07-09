@@ -27,7 +27,10 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
     local questID, questData = nil, nil
 
     WithQuestLogSelection(questLogIndex, function()
-        local title, level, questType, _, _, _, _, qID = GetQuestLogTitle(questLogIndex)
+        -- Backward compatibility: Ascension возвращает 9 параметров, стандартный WoW - 8
+        local title, level, questType, _, _, _, _, qID8, qID9 = GetQuestLogTitle(questLogIndex)
+        local qID = qID9 or qID8  -- Используем 9-й параметр если есть, иначе 8-й
+        
         if qID and qID ~= 0 then
             questID = qID
         elseif GetQuestID then
@@ -168,8 +171,37 @@ local function QuestDataBaseController_OnLoad()
         if GetQuestID then
             questID = GetQuestID()
             if questID and questID ~= 0 then
-
                 questData = MQSH_QuestDB[questID]
+            end
+        end
+        
+        -- Если не получилось, ищем по квест логу
+        if not questID or questID == 0 then
+            local numQuestLogEntries = GetNumQuestLogEntries()
+            
+            for i = 1, numQuestLogEntries do
+                local title, level, questType, _, _, _, _, qID8, qID9 = GetQuestLogTitle(i)
+                local qID = qID9 or qID8  -- Backward compatibility
+                
+                if qID and qID ~= 0 and MQSH_QuestDB[qID] then
+                    questID = qID
+                    questData = MQSH_QuestDB[qID]
+                    break
+                end
+            end
+            
+            -- Последняя попытка - поиск по названию
+            if not questID and GetTitleText then
+                local currentTitle = GetTitleText()
+                if currentTitle then
+                    for id, data in pairs(MQSH_QuestDB) do
+                        if data.title == currentTitle then
+                            questID = id
+                            questData = data
+                            break
+                        end
+                    end
+                end
             end
         end
         
@@ -217,10 +249,27 @@ local function QuestDataBaseController_OnLoad()
         if event == "GOSSIP_SHOW" or event == "QUEST_DETAIL" then
             currentNPC = UnitName("npc")
         elseif event == "QUEST_COMPLETE" then
-            local questID, questData = GetInfoForHistory()
-            completedQuestID = questID
-            questComplete = true
             currentNPC = UnitName("npc")
+            questComplete = true
+            
+            local questID, questData = GetInfoForHistory()
+            
+            -- Если не нашли через GetInfoForHistory, попробуем напрямую по квест логу
+            if not questID then
+                local numQuestLogEntries = GetNumQuestLogEntries()
+                for i = 1, numQuestLogEntries do
+                    local title, level, questType, _, _, _, _, qID8, qID9 = GetQuestLogTitle(i)
+                    local qID = qID9 or qID8  -- Backward compatibility
+                    
+                    if qID and qID ~= 0 and MQSH_QuestDB[qID] then
+                        questID = qID
+                        questData = MQSH_QuestDB[qID]
+                        break
+                    end
+                end
+            end
+            
+            completedQuestID = questID
         elseif event == "QUEST_ACCEPTED" then
             local questLogIndex, questIDFromEvent = ...
             local npcName = currentNPC
@@ -228,8 +277,19 @@ local function QuestDataBaseController_OnLoad()
             completedQuestID = nil
             SafeAfter(0.05, function()
                 local questID, questData = GetQuestIDAndData(questLogIndex, npcName)
+                
                 if questID and questData and not MQSH_QuestDB[questID] then
                     MQSH_QuestDB[questID] = questData
+                    
+                    -- Update UI if overlay is visible
+                    if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay:IsVisible() then
+                        if _G.QuestList and _G.QuestList.BuildQuestList then
+                            _G.QuestList.BuildQuestList()
+                        end
+                        if _G.UpdateQuestCountText then
+                            _G.UpdateQuestCountText()
+                        end
+                    end
                 end
                 currentNPC = nil
             end)
@@ -238,6 +298,17 @@ local function QuestDataBaseController_OnLoad()
         elseif event == "QUEST_FINISHED" then
             if questComplete == true then
                 SaveQuestInfoToHistory()
+                
+                -- Update UI if overlay is visible
+                if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay:IsVisible() then
+                    if _G.QuestList and _G.QuestList.BuildQuestList then
+                        _G.QuestList.BuildQuestList()
+                    end
+                    if _G.UpdateQuestCountText then
+                        _G.UpdateQuestCountText()
+                    end
+                end
+                
                 questComplete = false
                 currentNPC = nil
                 completedQuestID = nil
