@@ -45,8 +45,7 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
                     break
                 end
             end
-
-            local locationName = CleanLocationString(GetRealZoneText() or GetZoneText())
+            
             
             if questGroup and (questGroup:lower():find("сюжет")) then
                 questType = "(Сюжетный)"
@@ -55,7 +54,8 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
                 questGroup = nil
             end
 
-            
+            local locationName = CleanLocationString(GetRealZoneText() or GetZoneText())
+
             local x, y = 0, 0
             if SetMapToCurrentZone then SetMapToCurrentZone() end
             if GetPlayerMapPosition then
@@ -121,8 +121,6 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
 
             local timeAccepted = date("%d.%m.%y %H:%M:%S")
 
-            print(questGroup)
-
             questData = {
                 title           = title,
                 level           = level,
@@ -143,54 +141,48 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
     return questID, questData
 end
 
+-- Получение информации для истории по текущему квесту
+local function GetInfoForHistory(currentNPC)
+    local questID = nil
+    local questData = nil
+    if GetQuestID then
+        questID = GetQuestID()
+        if questID and questID ~= 0 then
+            questData = MQSH_QuestDB[questID]
+        end
+    end
+    return questID, questData
+end
+
+-- Сохранение информации о завершении квеста в историю
+local function SaveQuestInfoToHistory(questID, currentNPC)
+    local questData = nil
+    if questID then
+        questData = MQSH_QuestDB[questID]
+        local x, y = 0, 0
+        if SetMapToCurrentZone then SetMapToCurrentZone() end
+        if GetPlayerMapPosition then
+            x, y = GetPlayerMapPosition("player")
+            x = math.floor((x or 0) * 10000) / 100
+            y = math.floor((y or 0) * 10000) / 100
+        end
+        local completionCoordinates = { x = x, y = y }
+        local completionNPC = currentNPC or "Неизвестный NPC"
+        local historyData = {
+            timeCompleted = date("%d.%m.%y %H:%M:%S"),
+            completionNPC = completionNPC,
+            completionLocation = CleanLocationString(GetRealZoneText() or GetZoneText()),
+            completionCoordinates = completionCoordinates
+        }
+        MQSH_Char_HistoryDB[questID] = historyData
+    end
+end
+
 local function QuestDataBaseController_OnLoad()
     local currentNPC = nil
     local questComplete = false
-    
-    local function GetInfoForHistory()
-        local questID = nil
-        local questData = nil
-        
-        if GetQuestID then
-            questID = GetQuestID()
-            if questID and questID ~= 0 then
-
-                questData = MQSH_QuestDB[questID]
-            end
-        end
-        
-        return questID, questData
-    end
-
     local completedQuestID = nil
 
-    local function SaveQuestInfoToHistory()
-        local questID = completedQuestID
-        local questData = nil
-        
-        if questID then
-            questData = MQSH_QuestDB[questID]
-            local x, y = 0, 0
-            if SetMapToCurrentZone then SetMapToCurrentZone() end
-            if GetPlayerMapPosition then
-                x, y = GetPlayerMapPosition("player")
-                x = math.floor((x or 0) * 10000) / 100
-                y = math.floor((y or 0) * 10000) / 100
-            end
-            local completionCoordinates = { x = x, y = y }
-            
-            local completionNPC = currentNPC or "Неизвестный NPC"
-            local historyData = {
-                timeCompleted = date("%d.%m.%y %H:%M:%S"),
-                completionNPC = completionNPC,
-                completionLocation = CleanLocationString(GetRealZoneText() or GetZoneText()),
-                completionCoordinates = completionCoordinates
-            }
-            
-            MQSH_Char_HistoryDB[questID] = historyData
-        end
-    end
-    
     local frame = CreateFrame("Frame")
     frame:RegisterEvent("QUEST_ACCEPTED")
     frame:RegisterEvent("GOSSIP_SHOW")
@@ -198,12 +190,12 @@ local function QuestDataBaseController_OnLoad()
     frame:RegisterEvent("QUEST_FINISHED")
     frame:RegisterEvent("GOSSIP_CLOSED")
     frame:RegisterEvent("QUEST_COMPLETE")
-    
+
     frame:SetScript("OnEvent", function(self, event, ...)
         if event == "GOSSIP_SHOW" or event == "QUEST_DETAIL" then
             currentNPC = UnitName("npc")
         elseif event == "QUEST_COMPLETE" then
-            local questID, questData = GetInfoForHistory()
+            local questID, questData = GetInfoForHistory(currentNPC)
             completedQuestID = questID
             questComplete = true
             currentNPC = UnitName("npc")
@@ -223,7 +215,7 @@ local function QuestDataBaseController_OnLoad()
             currentNPC = nil
         elseif event == "QUEST_FINISHED" then
             if questComplete == true then
-                SaveQuestInfoToHistory()
+                SaveQuestInfoToHistory(completedQuestID, currentNPC)
                 questComplete = false
                 currentNPC = nil
                 completedQuestID = nil
