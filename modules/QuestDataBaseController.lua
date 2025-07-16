@@ -39,23 +39,22 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
             local questGroup = nil
             
             for i = questLogIndex - 1, 1, -1 do
-                local headerTitle, headerLevel, headerType, _, _, _, _, headerQID, _, _, _, isHeader = GetQuestLogTitle(i)
-                if headerLevel == 0 and headerType == nil and headerQID == nil then
+                local headerTitle, headerLevel, headerType, _, _, _, _, _, _, _, _, isHeader = GetQuestLogTitle(i)
+                if headerLevel == 0 and headerType == nil then
                     questGroup = headerTitle
                     break
                 end
             end
-            
-            if questGroup and (questGroup:lower():find("сюжет") or questGroup:lower():find("story")) then
-                questType = "(Сюжетный)"
-                questGroup = nil
-            end
-
-            if questGroup and not questGroup:lower():find("особ") and questType and not questType:lower():find("рей") and not questType:lower():find("подземель") then
-                questGroup = nil
-            end
 
             local locationName = CleanLocationString(GetRealZoneText() or GetZoneText())
+            
+            if questGroup and (questGroup:lower():find("сюжет")) then
+                questType = "(Сюжетный)"
+                questGroup = nil
+            elseif (questGroup and not questGroup:lower():find("особ")) and ((questType and not questType:lower():find("рей") and not questType:lower():find("подземель")) or (not questType)) then
+                questGroup = nil
+            end
+
             
             local x, y = 0, 0
             if SetMapToCurrentZone then SetMapToCurrentZone() end
@@ -121,6 +120,8 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
             end
 
             local timeAccepted = date("%d.%m.%y %H:%M:%S")
+
+            print(questGroup)
 
             questData = {
                 title           = title,
