@@ -27,7 +27,7 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
     local questID, questData = nil, nil
 
     WithQuestLogSelection(questLogIndex, function()
-        local title, level, questType, _, _, _, _, qID = GetQuestLogTitle(questLogIndex)
+        local title, level, questType, _, _, _, _, _, qID = GetQuestLogTitle(questLogIndex)
         if qID and qID ~= 0 then
             questID = qID
         elseif GetQuestID then
