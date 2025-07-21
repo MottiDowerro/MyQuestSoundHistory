@@ -1,6 +1,7 @@
 local function SoundAnouncer_OnLoad()
     
     local pendingQuests = {}
+    local completedObjectives = {}
     local f = CreateFrame("Frame")
 
     f:RegisterEvent("QUEST_WATCH_UPDATE")
@@ -19,21 +20,28 @@ local function SoundAnouncer_OnLoad()
                     if numObjectives and numObjectives > 0 then 
                         local allComplete = true
                         local singleCompleted = false
-                    
+                        local newObjectiveCompleted = false
+                        completedObjectives[questId] = completedObjectives[questId] or {}
+                        
                         for i = 1, numObjectives do
-                            local _, _, isCompleted = GetQuestLogLeaderBoard(i, questId)
+                            local text, type, isCompleted = GetQuestLogLeaderBoard(i, questId)
                             if isCompleted then
+                                if not completedObjectives[questId][i] then
+                                    newObjectiveCompleted = true
+                                    completedObjectives[questId][i] = true
+                                end
                                 singleCompleted = true
-                            elseif allComplete then
+                            else
                                 allComplete = false
                             end
                         end
-                    
+                        
                         if allComplete and MQSH_Config and MQSH_Config.enableWorkComplete then
                             PlaySoundFile(MQSH_Config.workCompleteSound)
                             pendingQuests[questId] = nil
+                            completedObjectives[questId] = nil
                             return
-                        elseif singleCompleted and MQSH_Config and MQSH_Config.enableSingleComplete then
+                        elseif newObjectiveCompleted and MQSH_Config and MQSH_Config.enableSingleComplete then
                             PlaySoundFile(MQSH_Config.singleCompleteSound)
                             pendingQuests[questId] = nil
                             return
