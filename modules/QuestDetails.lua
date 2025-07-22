@@ -229,12 +229,7 @@ end
 -- Универсальные функции для работы с предметами
 QuestDetails.GetItemTexture = function(item)
     local texture = "Interface\\Icons\\INV_Misc_QuestionMark"
-    if item.itemID then
-        local itemTexture = GetItemIcon(item.itemID)
-        if itemTexture then
-            texture = itemTexture
-        end
-    elseif item.name then
+    if item.name then
         local _, _, _, _, _, _, _, _, _, itemTexture = GetItemInfo(item.name)
         if itemTexture then
             texture = itemTexture
@@ -243,28 +238,34 @@ QuestDetails.GetItemTexture = function(item)
     return texture
 end
 
+-- Настройка отображения предмета
 QuestDetails.SetupItemFrame = function(row, item, frameWidth, ICON_SIZE, ITEM_HEIGHT)
     row:SetWidth(frameWidth)
     row:SetHeight(ITEM_HEIGHT)
     
-    -- Получаем текстуру предмета
+    -- Установка текстуры
     local texture = QuestDetails.GetItemTexture(item)
     row.icon:SetTexture(texture)
     
-    -- Настраиваем текст
+    -- Настройка текста названия
     local nameTxt = item.name or ""
-    row.text:SetWidth(frameWidth - (ICON_SIZE+10))
+    row.text:SetWidth(frameWidth - (ICON_SIZE + 10))
     row.text:SetText(nameTxt)
-    if not row.text.SetMaxLines then
-        row.text:SetHeight(ITEM_HEIGHT - 5)
+    
+    -- Отображение количества
+    if item.numItems and item.numItems > 1 then
+        row.countText:SetText(item.numItems) -- Без символа "x"
+        row.countText:Show()
+    else
+        row.countText:Hide()
     end
     
-    -- Позиционируем элементы
+    -- Позиционирование элементов
     row.iconBorder:SetPoint("LEFT", row, "LEFT", 0, 0)
     row.text:SetPoint("LEFT", row.iconBorder, "RIGHT", 4, 0)
     row.text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
     
-    -- Сохраняем данные предмета
+    -- Сохранение данных
     row.itemID = item.itemID
     row.itemName = item.name
     row:Show()
@@ -276,42 +277,49 @@ QuestDetails.HideUnusedFrames = function(frames, usedCount)
     end
 end
 
-QuestDetails.CreateItemFrame = function(index, showCount)
+QuestDetails.CreateItemFrame = function(index)
     local ICON_SIZE = 40
     local ITEM_HEIGHT = ICON_SIZE + 4
-    
     local row = CreateFrame("Frame", nil, rightContent)
+    
+    -- Настройка фона фрейма
     ScrollBarUtils.SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
     row:EnableMouse(true)
-
+    
+    -- Контейнер для иконки
     row.iconBorder = CreateFrame("Frame", nil, row)
     ScrollBarUtils.SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
     row.iconBorder:SetSize(ICON_SIZE+4, ICON_SIZE+4)
-
+    
+    -- Иконка предмета
     row.icon = row.iconBorder:CreateTexture(nil, "ARTWORK")
     row.icon:SetPoint("CENTER")
     row.icon:SetSize(ICON_SIZE, ICON_SIZE)
     row.icon:SetTexCoord(5/64,59/64,5/64,59/64)
-
+    
+    -- Основной текст предмета
     row.text = ScrollBarUtils.CreateFS(row, "GameFontHighlight")
     row.text:SetJustifyH("LEFT")
     row.text:SetJustifyV("MIDDLE")
     
-    -- Добавляем текст количества на иконку только для предметов-целей
-    if showCount then
+    -- Текст количества с автоматическим определением шрифта
     row.countText = row.iconBorder:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    row.countText:SetFontObject(GameFontNormal) -- Используем системный шрифт
     row.countText:SetJustifyH("RIGHT")
     row.countText:SetJustifyV("BOTTOM")
     row.countText:SetPoint("BOTTOMRIGHT", row.iconBorder, "BOTTOMRIGHT", -2, 2)
-    row.countText:SetTextColor(1, 1, 1)
-    end
+    row.countText:SetTextColor(1, 1, 1) -- Белый цвет
+    
+    -- Добавляем обводку через флаги шрифта
+    local font, size, flags = row.countText:GetFont()
+    row.countText:SetFont(font, size, "OUTLINE") -- Сохраняем оригинальные параметры + обводка
     
     return row
 end
 
 -- Обратная совместимость - оставляем старые функции как алиасы
 QuestDetails.CreateRewardItemFrame = function(index)
-    return QuestDetails.CreateItemFrame(index, false)
+    return QuestDetails.CreateItemFrame(index)
 end
 
 QuestDetails.SetupItemTooltip = function(row)
@@ -580,7 +588,6 @@ QuestDetails.ShowQuestDetails = function(questID)
     QuestDetails.SetupDescription(q)
     QuestDetails.SetupRewardItems(q)
     QuestDetails.SetupExtraRewards(q)
-    
     QuestDetails.LayoutQuestDetails()
 end
 

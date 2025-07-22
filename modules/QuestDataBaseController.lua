@@ -75,7 +75,7 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
 
             -- Цели
             local objectives = {}
-            local numObjectives = GetNumQuestLeaderBoards()
+            local numObjectives = GetNumQuestLeaderBoards(questID)
             if numObjectives and numObjectives > 0 then
                 for i = 1, numObjectives do
                     local desc, type = select(1, GetQuestLogLeaderBoard(i))
@@ -93,27 +93,27 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
                 xp      = GetQuestLogRewardXP(),
             }
 
-            local numRewards = GetNumQuestLogRewards()
+            local numRewards = GetNumQuestLogRewards(questID)
             if numRewards and numRewards > 0 then
                 for i = 1, numRewards do
-                    local itemName, _, _, _, _, itemID = GetQuestLogRewardInfo(i)
+                    local itemName, _, numItems, _, _ = GetQuestLogRewardInfo(i, questID)
                     if itemName then
                         table.insert(rewards.items, {
-                            name    = itemName,
-                            itemID  = itemID,
+                            name = itemName,
+                            numItems = numItems,
                         })
                     end
                 end
             end
 
-            local numChoices = GetNumQuestLogChoices()
+            local numChoices = GetNumQuestLogChoices(questID)
             if numChoices and numChoices > 0 then
                 for i = 1, numChoices do
-                    local itemName, _, _, _, _, itemID = GetQuestLogChoiceInfo(i)
+                    local itemName, _, numItems, _, _ = GetQuestLogChoiceInfo(i, questID)
                     if itemName then
                         table.insert(rewards.choices, {
-                            name    = itemName,
-                            itemID  = itemID,
+                            name = itemName,
+                            numItems  = numItems,
                         })
                     end
                 end
@@ -204,13 +204,11 @@ local function QuestDataBaseController_OnLoad()
             local npcName = currentNPC
             questComplete = false
             completedQuestID = nil
-            C_Timer:After(0.05, function()
-                local questID, questData = GetQuestIDAndData(questLogIndex, npcName)
-                if questID and questData and not MQSH_QuestDB[questID] then
-                    MQSH_QuestDB[questID] = questData
-                end
-                currentNPC = nil
-            end)
+            local questID, questData = GetQuestIDAndData(questLogIndex, npcName)
+            if questID and questData and not MQSH_QuestDB[questID] then
+                MQSH_QuestDB[questID] = questData
+            end
+            currentNPC = nil
         elseif event == "GOSSIP_CLOSED" then
             currentNPC = nil
         elseif event == "QUEST_FINISHED" then
