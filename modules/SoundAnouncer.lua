@@ -1,5 +1,4 @@
 local function SoundAnouncer_OnLoad()
-    
     local pendingQuests = {}
     local completedObjectives = {}
     local f = CreateFrame("Frame")
@@ -19,7 +18,6 @@ local function SoundAnouncer_OnLoad()
                     
                     if numObjectives and numObjectives > 0 then 
                         local allComplete = true
-                        local singleCompleted = false
                         local newObjectiveCompleted = false
                         completedObjectives[questId] = completedObjectives[questId] or {}
                         
@@ -30,7 +28,6 @@ local function SoundAnouncer_OnLoad()
                                     newObjectiveCompleted = true
                                     completedObjectives[questId][i] = true
                                 end
-                                singleCompleted = true
                             else
                                 allComplete = false
                             end
@@ -38,17 +35,11 @@ local function SoundAnouncer_OnLoad()
                         
                         if allComplete and MQSH_Config and MQSH_Config.enableWorkComplete then
                             PlaySoundFile(MQSH_Config.workCompleteSound)
-                            pendingQuests[questId] = nil
                             completedObjectives[questId] = nil
-                            return
                         elseif newObjectiveCompleted and MQSH_Config and MQSH_Config.enableSingleComplete then
                             PlaySoundFile(MQSH_Config.singleCompleteSound)
-                            pendingQuests[questId] = nil
-                            return
-                        elseif not singleCompleted and MQSH_Config and MQSH_Config.enableProgressSound then
+                        elseif not allComplete and not newObjectiveCompleted and MQSH_Config and MQSH_Config.enableProgressSound then
                             PlaySoundFile(MQSH_Config.progressSound)
-                            pendingQuests[questId] = nil
-                            return
                         end
                     end
                 end
