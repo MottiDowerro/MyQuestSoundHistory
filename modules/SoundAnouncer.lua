@@ -36,6 +36,7 @@ local function SoundAnouncer_OnLoad()
                         if allComplete and MQSH_Config and MQSH_Config.enableWorkComplete then
                             PlaySoundFile(MQSH_Config.workCompleteSound)
                             completedObjectives[questId] = nil
+                            pendingQuests[questId] = nil
                         elseif newObjectiveCompleted and MQSH_Config and MQSH_Config.enableSingleComplete then
                             PlaySoundFile(MQSH_Config.singleCompleteSound)
                         elseif not allComplete and not newObjectiveCompleted and MQSH_Config and MQSH_Config.enableProgressSound then
