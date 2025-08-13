@@ -1,6 +1,7 @@
 local function SoundAnouncer_OnLoad()
     local pendingQuests = {}
     local completedObjectives = {}
+    local objectiveStates = {}
     local f = CreateFrame("Frame")
 
     f:RegisterEvent("QUEST_WATCH_UPDATE")
@@ -19,10 +20,18 @@ local function SoundAnouncer_OnLoad()
                     if numObjectives and numObjectives > 0 then 
                         local allComplete = true
                         local newObjectiveCompleted = false
+                        local progressMade = false
                         completedObjectives[questId] = completedObjectives[questId] or {}
+                        objectiveStates[questId] = objectiveStates[questId] or {}
                         
                         for i = 1, numObjectives do
                             local text, type, isCompleted = GetQuestLogLeaderBoard(i, questId)
+                            
+                            if objectiveStates[questId][i] and objectiveStates[questId][i] ~= text then
+                                progressMade = true
+                            end
+                            objectiveStates[questId][i] = text
+
                             if isCompleted then
                                 if not completedObjectives[questId][i] then
                                     newObjectiveCompleted = true
@@ -36,11 +45,12 @@ local function SoundAnouncer_OnLoad()
                         if allComplete and MQSH_Config and MQSH_Config.enableWorkComplete then
                             PlaySoundFile(MQSH_Config.workCompleteSound)
                             completedObjectives[questId] = nil
+                            objectiveStates[questId] = nil
                             pendingQuests[questId] = nil
+                        elseif progressMade and not newObjectiveCompleted and MQSH_Config and MQSH_Config.enableProgressSound then
+                            PlaySoundFile(MQSH_Config.progressSound)
                         elseif newObjectiveCompleted and MQSH_Config and MQSH_Config.enableSingleComplete then
                             PlaySoundFile(MQSH_Config.singleCompleteSound)
-                        elseif not allComplete and not newObjectiveCompleted and MQSH_Config and MQSH_Config.enableProgressSound then
-                            PlaySoundFile(MQSH_Config.progressSound)
                         end
                     end
                 end
