@@ -180,7 +180,7 @@ local function TryCreateQuestUI()
     overlay = CreateFrame("Frame", "MQSH_QuestOverlay", QuestLogFrame)
     overlay:SetPoint("TOPLEFT", QuestLogFrame, "TOPLEFT", 11, -12)
     overlay:SetPoint("BOTTOMRIGHT", QuestLogFrame, "BOTTOMRIGHT", -1, 11)
-    ScrollBarUtils.SetBackdrop(overlay, {0.10, 0.10, 0.10, 0.95}, {0, 0, 0, 0.95})
+    Utils.SetBackdrop(overlay, {0.10, 0.10, 0.10, 0.95}, {0, 0, 0, 0.95})
     overlay:SetFrameStrata("DIALOG")
     overlay:Hide()
 
@@ -191,7 +191,7 @@ local function TryCreateQuestUI()
     
     closeBtn:SetScript("OnClick", function()
         overlay:Hide()
-        ScrollBarUtils.ResetScrollBars(scrollPairs)
+        Utils.ResetScrollBars(scrollPairs)
         -- Сбрасываем параметры сортировки
         QuestList.SetSortParams(QuestList.GetSortType(), QuestList.GetSortOrder())
     end)
@@ -199,7 +199,7 @@ local function TryCreateQuestUI()
     local overlayWidth = QuestLogFrame:GetWidth() - 12
     local overlayHeight = QuestLogFrame:GetHeight() - 23
     
-    local totalFixedWidth = OVERLAY_PADDING_LEFT_RIGHT + ScrollBarUtils.SCROLLBAR_WIDTH + ScrollBarUtils.SCROLLBAR_WIDTH + OVERLAY_PADDING_LEFT_RIGHT
+    local totalFixedWidth = OVERLAY_PADDING_LEFT_RIGHT + Utils.SCROLLBAR_WIDTH + Utils.SCROLLBAR_WIDTH + OVERLAY_PADDING_LEFT_RIGHT
     local totalSpacing = WINDOW_SPACING * 3
     local availableWidth = overlayWidth - totalFixedWidth - totalSpacing
     local windowWidth = availableWidth / 2
@@ -208,7 +208,7 @@ local function TryCreateQuestUI()
     
     local leftWindowX = OVERLAY_PADDING_LEFT_RIGHT
     local leftScrollbarX = leftWindowX + windowWidth + WINDOW_SPACING
-    local rightWindowX = leftScrollbarX + ScrollBarUtils.SCROLLBAR_WIDTH + WINDOW_SPACING
+    local rightWindowX = leftScrollbarX + Utils.SCROLLBAR_WIDTH + WINDOW_SPACING
     local rightScrollbarX = rightWindowX + windowWidth + WINDOW_SPACING
     
     local elementY = -OVERLAY_PADDING_TOP
@@ -218,7 +218,7 @@ local function TryCreateQuestUI()
         LEFT_WINDOW_PADDING_X, LEFT_WINDOW_PADDING_Y, WINDOW_SPACING, BUTTON_HEIGHT, BUTTON_SPACING
     )
 
-    local rightTitle = ScrollBarUtils.CreateFS(overlay, "GameFontHighlight")
+    local rightTitle = Utils.CreateFS(overlay, "GameFontHighlight")
     rightTitle:SetText("|cffFFD100История квестов|r")
     rightTitle:ClearAllPoints()
     rightTitle:SetPoint("TOP", overlay, "TOP", 0, -2)
@@ -227,8 +227,8 @@ local function TryCreateQuestUI()
     local questCountFS = overlay:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     questCountFS:SetPoint("TOPLEFT", overlay, "TOPLEFT", 7, sortBtnY)
     questCountFS:SetJustifyH("LEFT")
-    if ScrollBarUtils and ScrollBarUtils.AddFontOutline then
-        ScrollBarUtils.AddFontOutline(questCountFS)
+    if Utils and Utils.AddFontOutline then
+        Utils.AddFontOutline(questCountFS)
     end
     
     overlay.questCountFS = questCountFS
@@ -245,25 +245,25 @@ local function TryCreateQuestUI()
     local rightWindow = CreateFrame("Frame", nil, overlay)
     rightWindow:SetPoint("TOPLEFT", overlay, "TOPLEFT", rightWindowX, elementY)
     rightWindow:SetSize(windowWidth, windowHeight)
-    ScrollBarUtils.SetBackdrop(rightWindow, {0.07, 0.07, 0.07, 0.97}, {0, 0, 0, 0.95})
+    Utils.SetBackdrop(rightWindow, {0.07, 0.07, 0.07, 0.97}, {0, 0, 0, 0.95})
 
-    rightScrollFrame, rightContent = ScrollBarUtils.CreateScrollFrame(rightWindow, RIGHT_WINDOW_PADDING_X, RIGHT_WINDOW_PADDING_Y)
-    rightScrollbar = ScrollBarUtils.CreateScrollBar(rightWindow, rightScrollFrame, rightWindow, WINDOW_SPACING, ScrollBarUtils.SCROLLBAR_WIDTH, 60)
+    rightScrollFrame, rightContent = Utils.CreateScrollFrame(rightWindow, RIGHT_WINDOW_PADDING_X, RIGHT_WINDOW_PADDING_Y)
+    rightScrollbar = Utils.CreateScrollBar(rightWindow, rightScrollFrame, rightWindow, WINDOW_SPACING, Utils.SCROLLBAR_WIDTH, 60)
 
     scrollPairs = {
         {scrollFrame = leftScrollFrame, scrollbar = leftScrollbar},
         {scrollFrame = rightScrollFrame, scrollbar = rightScrollbar}
     }
 
-    detailsTitle = ScrollBarUtils.CreateFS(rightContent, "GameFontNormalHuge")
-    ScrollBarUtils.RemoveFontOutline(detailsTitle)
+    detailsTitle = Utils.CreateFS(rightContent, "GameFontNormalHuge")
+    Utils.RemoveFontOutline(detailsTitle)
     detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
     detailsTitle:SetJustifyH("LEFT")
 
-    detailsFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+    detailsFS = Utils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
     detailsFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, -25)
 
-    local questMetaFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+    local questMetaFS = Utils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
     questMetaFS:SetJustifyH("LEFT")
 
     QuestDetails.InitVars({
@@ -299,7 +299,7 @@ local function TryCreateQuestUI()
     DataBtn:SetScript("OnClick", function()
         if overlay:IsShown() then
             overlay:Hide()
-            ScrollBarUtils.ResetScrollBars(scrollPairs)
+            Utils.ResetScrollBars(scrollPairs)
             QuestList.SetSortParams(QuestList.GetSortType(), QuestList.GetSortOrder())
         else
             overlay:Show()
@@ -308,13 +308,13 @@ local function TryCreateQuestUI()
 
     hooksecurefunc(QuestLogFrame, "Hide", function()
         overlay:Hide()
-        ScrollBarUtils.ResetScrollBars(scrollPairs)
+        Utils.ResetScrollBars(scrollPairs)
         QuestList.SetSortParams(QuestList.GetSortType(), QuestList.GetSortOrder())
     end)
 
     overlay:SetScript("OnShow", function()
         QuestList.BuildQuestList()
-        ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
+        Utils.UpdateAllScrollBars(scrollPairs)
         for _, pair in ipairs(scrollPairs) do
             if pair.scrollFrame then 
                 pair.scrollFrame:SetVerticalScroll(0) 
@@ -326,7 +326,7 @@ local function TryCreateQuestUI()
         UpdateQuestCountText()
     end)
 
-    ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
+    Utils.UpdateAllScrollBars(scrollPairs)
 
     local oldBuildQuestList = QuestList.BuildQuestList
     QuestList.BuildQuestList = function(...)

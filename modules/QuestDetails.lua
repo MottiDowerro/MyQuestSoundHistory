@@ -94,7 +94,7 @@ QuestDetails.SetupQuestMeta = function(q)
     local reset = "|r"
     
     if not questMetaFS then
-        questMetaFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+        questMetaFS = Utils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
         questMetaFS:SetJustifyH("LEFT")
     end
     
@@ -161,7 +161,7 @@ QuestDetails.SetupObjectivesSummary = function(q)
     local reset = "|r"
     
     if not objectivesSummaryFS then
-        objectivesSummaryFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+        objectivesSummaryFS = Utils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
         objectivesSummaryFS:SetJustifyH("LEFT")
     end
     
@@ -181,7 +181,7 @@ QuestDetails.SetupDetailedObjectives = function(q)
     local objectives = q.objectives or {}
     if #objectives > 0 then
         if not objectivesTextFS then
-            objectivesTextFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+            objectivesTextFS = Utils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
             objectivesTextFS:SetJustifyH("LEFT")
         end
 
@@ -203,8 +203,8 @@ QuestDetails.SetupDescription = function(q)
     local reset = "|r"
     
     if not descHeadingFS then
-        descHeadingFS = ScrollBarUtils.CreateFS(rightContent, "GameFontNormalHuge")
-        ScrollBarUtils.RemoveFontOutline(descHeadingFS)
+        descHeadingFS = Utils.CreateFS(rightContent, "GameFontNormalHuge")
+        Utils.RemoveFontOutline(descHeadingFS)
         descHeadingFS:SetJustifyH("LEFT")
     end
     
@@ -283,12 +283,12 @@ QuestDetails.CreateItemFrame = function(index)
     local row = CreateFrame("Frame", nil, rightContent)
     
     -- Настройка фона фрейма
-    ScrollBarUtils.SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
+    Utils.SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
     row:EnableMouse(true)
     
     -- Контейнер для иконки
     row.iconBorder = CreateFrame("Frame", nil, row)
-    ScrollBarUtils.SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
+    Utils.SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
     row.iconBorder:SetSize(ICON_SIZE+4, ICON_SIZE+4)
     
     -- Иконка предмета
@@ -298,7 +298,7 @@ QuestDetails.CreateItemFrame = function(index)
     row.icon:SetTexCoord(5/64,59/64,5/64,59/64)
     
     -- Основной текст предмета
-    row.text = ScrollBarUtils.CreateFS(row, "GameFontHighlight")
+    row.text = Utils.CreateFS(row, "GameFontHighlight")
     row.text:SetJustifyH("LEFT")
     row.text:SetJustifyV("MIDDLE")
     
@@ -391,8 +391,8 @@ QuestDetails.SetupRewardItems = function(q)
     end
     
     if not rewardsHeadingFS then
-        rewardsHeadingFS = ScrollBarUtils.CreateFS(rightContent, "GameFontNormalHuge")
-        ScrollBarUtils.RemoveFontOutline(rewardsHeadingFS)
+        rewardsHeadingFS = Utils.CreateFS(rightContent, "GameFontNormalHuge")
+        Utils.RemoveFontOutline(rewardsHeadingFS)
     end
     rewardsHeadingFS:SetText("|cffFFD100Награды:|r")
     
@@ -438,7 +438,7 @@ QuestDetails.SetupExtraRewards = function(q)
     end
     
     if not rewardExtraFS then
-        rewardExtraFS = ScrollBarUtils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
+        rewardExtraFS = Utils.CreateFS(rightContent, "GameFontHighlight", rightScrollFrame:GetWidth())
     end
     
     local extraLines = {}
@@ -538,7 +538,7 @@ QuestDetails.LayoutQuestDetails = function()
     rightContent:SetHeight(totalHeight)
     rightScrollFrame:SetVerticalScroll(0)
     
-    ScrollBarUtils.UpdateScrollBar(rightScrollFrame, rightScrollbar)
+    Utils.UpdateScrollBar(rightScrollFrame, rightScrollbar)
 end
 
 QuestDetails.ShowQuestDetails = function(questID)

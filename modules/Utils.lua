@@ -1,11 +1,11 @@
-local ScrollBarUtils = {}
+local Utils = {}
 
 -- Константы
-ScrollBarUtils.SCROLLBAR_WIDTH = 16    -- Ширина скроллбара
+Utils.SCROLLBAR_WIDTH = 16    -- Ширина скроллбара
 
 
 --- Обновляет скроллбар на основе содержимого ScrollFrame
-function ScrollBarUtils.UpdateScrollBar(scrollFrame, scrollbar)
+function Utils.UpdateScrollBar(scrollFrame, scrollbar)
     if not scrollFrame or not scrollbar then return end
     
     local contentHeight = scrollFrame:GetScrollChild():GetHeight()
@@ -22,14 +22,14 @@ function ScrollBarUtils.UpdateScrollBar(scrollFrame, scrollbar)
 end
 
 --- Обновляет все скроллбары в списке
-function ScrollBarUtils.UpdateAllScrollBars(scrollPairs)
+function Utils.UpdateAllScrollBars(scrollPairs)
     for _, pair in ipairs(scrollPairs) do
-        ScrollBarUtils.UpdateScrollBar(pair.scrollFrame, pair.scrollbar)
+        Utils.UpdateScrollBar(pair.scrollFrame, pair.scrollbar)
     end
 end
 
 --- Сбрасывает позицию скроллбаров
-function ScrollBarUtils.ResetScrollBars(scrollPairs)
+function Utils.ResetScrollBars(scrollPairs)
     for _, pair in ipairs(scrollPairs) do
         if pair.scrollFrame then 
             pair.scrollFrame:SetVerticalScroll(0) 
@@ -42,11 +42,11 @@ function ScrollBarUtils.ResetScrollBars(scrollPairs)
 end
 
 --- Создает скроллбар для ScrollFrame
-function ScrollBarUtils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacing, width, scrollStep)
+function Utils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacing, width, scrollStep)
     local scrollbar = CreateFrame("Slider", nil, parent, "UIPanelScrollBarTemplate")
     scrollbar:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", spacing, -14)
     scrollbar:SetPoint("BOTTOMLEFT", anchorFrame, "BOTTOMRIGHT", spacing, 14)
-    scrollbar:SetWidth(width or ScrollBarUtils.SCROLLBAR_WIDTH)
+    scrollbar:SetWidth(width or Utils.SCROLLBAR_WIDTH)
     scrollbar:SetValueStep(1)
     scrollbar:SetValue(0)
     scrollbar:SetMinMaxValues(0, 0)
@@ -69,7 +69,7 @@ function ScrollBarUtils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacin
 end
 
 --- Создает ScrollFrame с контентом
-function ScrollBarUtils.CreateScrollFrame(parent, paddingX, paddingY)
+function Utils.CreateScrollFrame(parent, paddingX, paddingY)
     local scrollFrame = CreateFrame("ScrollFrame", nil, parent)
     scrollFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", paddingX, -paddingY)
     scrollFrame:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -paddingX, paddingY)
@@ -82,7 +82,7 @@ function ScrollBarUtils.CreateScrollFrame(parent, paddingX, paddingY)
 end
 
 -- Общие утилиты
-function ScrollBarUtils.SetBackdrop(frame, color, borderColor)
+function Utils.SetBackdrop(frame, color, borderColor)
     frame:SetBackdrop({
         bgFile   = "Interface\\Buttons\\WHITE8x8",
         edgeFile = "Interface\\Buttons\\WHITE8x8",
@@ -96,7 +96,7 @@ function ScrollBarUtils.SetBackdrop(frame, color, borderColor)
 end
 
 --- Создает FontString
-function ScrollBarUtils.CreateFS(parent, template, width)
+function Utils.CreateFS(parent, template, width)
     local fs = parent:CreateFontString(nil, "ARTWORK", template or "GameFontHighlight")
     fs:SetJustifyH("LEFT")
     fs:SetJustifyV("TOP")
@@ -108,7 +108,7 @@ function ScrollBarUtils.CreateFS(parent, template, width)
 end
 
 --- Убирает контур шрифта
-function ScrollBarUtils.RemoveFontOutline(fs)
+function Utils.RemoveFontOutline(fs)
     if not fs or type(fs) ~= "table" or not fs.GetFont then
         return
     end
@@ -118,7 +118,7 @@ function ScrollBarUtils.RemoveFontOutline(fs)
     end
 end
 
-function ScrollBarUtils.AddFontOutline(fs)
+function Utils.AddFontOutline(fs)
     if not fs or type(fs) ~= "table" or not fs.GetFont then
         return
     end
@@ -128,4 +128,4 @@ function ScrollBarUtils.AddFontOutline(fs)
     end
 end
 
-_G.ScrollBarUtils = ScrollBarUtils 
+_G.Utils = Utils 

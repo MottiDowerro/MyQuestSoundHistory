@@ -9,7 +9,7 @@
 
 Settings.lua
 Core.lua
-modules\ScrollBarUtils.lua
+modules\Utils.lua
 modules\SoundAnouncer.lua
 modules\QuestDB.lua
 modules\CharacterQuestDB.lua
