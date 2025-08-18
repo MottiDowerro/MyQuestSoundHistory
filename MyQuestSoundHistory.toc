@@ -11,8 +11,7 @@ Settings.lua
 Core.lua
 modules\Utils.lua
 modules\SoundAnouncer.lua
-modules\QuestDB.lua
-modules\CharacterQuestDB.lua
+modules\QuestDataBaseController.lua
 modules\QuestDetails.lua
 modules\QuestList.lua
 modules\QuestOverlay.lua

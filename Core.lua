@@ -1,10 +1,6 @@
 local addonName = "MyQuestSoundHistory"
 local f = CreateFrame("Frame")
 
-if not _G.MQSH_API then
-    _G.MQSH_API = {}
-end
-
 f:RegisterEvent("ADDON_LOADED")
 
 f:SetScript("OnEvent", function(self, event, arg1, arg2)
@@ -36,11 +32,8 @@ f:SetScript("OnEvent", function(self, event, arg1, arg2)
             end
         end
         if MQSH_Config and MQSH_Config.enableHistory then
-            if _G.QuestDB_OnLoad then 
-                _G.QuestDB_OnLoad()
-            end
-            if _G.CharacterQuestDB_OnLoad then
-                _G.CharacterQuestDB_OnLoad()
+            if _G.QuestDataBaseController_OnLoad then 
+                _G.QuestDataBaseController_OnLoad()
             end
         end
     end
