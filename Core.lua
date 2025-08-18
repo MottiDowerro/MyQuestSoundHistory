@@ -35,6 +35,9 @@ f:SetScript("OnEvent", function(self, event, arg1, arg2)
             if _G.QuestDataBaseController_OnLoad then 
                 _G.QuestDataBaseController_OnLoad()
             end
+            if _G.CharacterDataBaseController_OnLoad then 
+                _G.CharacterDataBaseController_OnLoad()
+            end
         end
     end
 end)
