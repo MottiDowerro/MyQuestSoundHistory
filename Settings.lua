@@ -63,8 +63,7 @@ local function CreateDropdown(parent, configKey, anchorFrame, text, xOffset, yOf
     dropdownText:SetFontObject("GameFontHighlightSmall")
 
     UIDropDownMenu_Initialize(dropdown, function(self, level, menuList)
-        local selectedValue = MQSH_Config[configKey]
-        
+        local selectedValue = MQSH_Config[configKey]        
         for _, sound in ipairs(SOUND_LIST) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = sound.value
@@ -106,7 +105,6 @@ local function CreatePlayButton(parent, anchorFrame, configKey, point, relativeT
     return button
 end
 
--- Главная панель
 local function CreateMainSettingsPanel()
     local panel = CreateFrame("Frame")
     panel.name = "MyQuestSoundHistory"
@@ -122,7 +120,6 @@ local function CreateMainSettingsPanel()
     InterfaceOptions_AddCategory(panel)
 end
 
--- Панель History (заглушка)
 local function CreateHistorySettingsPanel()
     local panel = CreateFrame("Frame")
     panel.name = "History"
@@ -140,7 +137,6 @@ local function CreateHistorySettingsPanel()
     InterfaceOptions_AddCategory(panel)
 end
 
--- Панель Sound Anouncer
 local function CreateSoundAnouncerSettingsPanel()
     local panel = CreateFrame("Frame")
     panel.name = "Sound Anouncer"

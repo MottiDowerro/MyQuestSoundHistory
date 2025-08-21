@@ -1,9 +1,8 @@
 local QuestDetails = {}
 
--- Вспомогательные переменные (будут передаваться через параметры или инициализироваться снаружи)
 local rewardItemFrames, rewardsVisibleCount
 local objectivesSummaryFS, objectivesTextFS, detailsFS, rewardsHeadingFS, rewardExtraFS, choiceLabelFS, descHeadingFS, detailsTitle
-local questMetaFS -- Новый элемент для метаданных квеста
+local questMetaFS 
 local rightContent, rightScrollFrame, rightScrollbar
 local selectedButton
 
@@ -25,9 +24,7 @@ function QuestDetails.InitVars(vars)
     selectedButton = vars.selectedButton
 end
 
--- Вспомогательные функции для отображения деталей квеста
 QuestDetails.ClearQuestDetails = function()
-    -- Очищаем все текстовые элементы и их позиции
     if objectivesSummaryFS then 
         objectivesSummaryFS:SetText("") 
         objectivesSummaryFS:ClearAllPoints()
@@ -82,7 +79,6 @@ QuestDetails.SetupQuestTitle = function(questID, q)
     
     if detailsTitle then
         detailsTitle:SetText(gold .. title .. reset)
-        -- Восстанавливаем позицию заголовка после очистки
         detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
     end
 end
@@ -100,18 +96,15 @@ QuestDetails.SetupQuestMeta = function(q)
     
     local metaLines = {}
     
-    -- Время принятия квеста
     if q.timeAccepted then
         table.insert(metaLines, gold .. "Принят:" .. reset .. " " .. grey .. q.timeAccepted .. reset)
     end
     
-    -- Координаты на отдельной строке
     if q.coordinates and q.coordinates.x and q.coordinates.y then
         local coordText = string.format("%.2f, %.2f", q.coordinates.x, q.coordinates.y)
         table.insert(metaLines, gold .. "Координаты:" .. reset .. " " .. grey .. coordText .. reset)
     end
     
-    -- NPC, который дал квест
     if q.npcName then
         local npcColor = blue
         if q.npcName == "Неизвестный NPC" then
@@ -120,12 +113,10 @@ QuestDetails.SetupQuestMeta = function(q)
         table.insert(metaLines, gold .. "От кого:" .. reset .. " " .. npcColor .. q.npcName .. reset)
     end
     
-    -- Локация
     if q.mainZone then
         table.insert(metaLines, gold .. "Локация:" .. reset .. " " .. blue .. q.mainZone .. reset)
     end
     
-    -- Добавляем информацию о завершении квеста (только если есть данные)
     if q.timeCompleted then
         table.insert(metaLines, gold .. "Завершен:" .. reset .. " " .. grey .. q.timeCompleted .. reset)
     end
@@ -226,7 +217,6 @@ QuestDetails.SetupDescription = function(q)
     end
 end
 
--- Универсальные функции для работы с предметами
 QuestDetails.GetItemTexture = function(item)
     local texture = "Interface\\Icons\\INV_Misc_QuestionMark"
     if item.name then
@@ -238,34 +228,28 @@ QuestDetails.GetItemTexture = function(item)
     return texture
 end
 
--- Настройка отображения предмета
 QuestDetails.SetupItemFrame = function(row, item, frameWidth, ICON_SIZE, ITEM_HEIGHT)
     row:SetWidth(frameWidth)
     row:SetHeight(ITEM_HEIGHT)
     
-    -- Установка текстуры
     local texture = QuestDetails.GetItemTexture(item)
     row.icon:SetTexture(texture)
     
-    -- Настройка текста названия
     local nameTxt = item.name or ""
     row.text:SetWidth(frameWidth - (ICON_SIZE + 10))
     row.text:SetText(nameTxt)
     
-    -- Отображение количества
     if item.numItems and item.numItems > 1 then
-        row.countText:SetText(item.numItems) -- Без символа "x"
+        row.countText:SetText(item.numItems) 
         row.countText:Show()
     else
         row.countText:Hide()
     end
     
-    -- Позиционирование элементов
     row.iconBorder:SetPoint("LEFT", row, "LEFT", 0, 0)
     row.text:SetPoint("LEFT", row.iconBorder, "RIGHT", 4, 0)
     row.text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
     
-    -- Сохранение данных
     row.itemID = item.itemID
     row.itemName = item.name
     row:Show()
@@ -282,48 +266,41 @@ QuestDetails.CreateItemFrame = function(index)
     local ITEM_HEIGHT = ICON_SIZE + 4
     local row = CreateFrame("Frame", nil, rightContent)
     
-    -- Настройка фона фрейма
     Utils.SetBackdrop(row, {0,0,0,0.2}, {1,1,1,1})
     row:EnableMouse(true)
     
-    -- Контейнер для иконки
     row.iconBorder = CreateFrame("Frame", nil, row)
     Utils.SetBackdrop(row.iconBorder, {0,0,0,1}, {1,1,1,1})
     row.iconBorder:SetSize(ICON_SIZE+4, ICON_SIZE+4)
     
-    -- Иконка предмета
     row.icon = row.iconBorder:CreateTexture(nil, "ARTWORK")
     row.icon:SetPoint("CENTER")
     row.icon:SetSize(ICON_SIZE, ICON_SIZE)
     row.icon:SetTexCoord(5/64,59/64,5/64,59/64)
     
-    -- Основной текст предмета
     row.text = Utils.CreateFS(row, "GameFontHighlight")
     row.text:SetJustifyH("LEFT")
     row.text:SetJustifyV("MIDDLE")
     
-    -- Текст количества с автоматическим определением шрифта
     row.countText = row.iconBorder:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    row.countText:SetFontObject(GameFontNormal) -- Используем системный шрифт
+    row.countText:SetFontObject(GameFontNormal) 
     row.countText:SetJustifyH("RIGHT")
     row.countText:SetJustifyV("BOTTOM")
     row.countText:SetPoint("BOTTOMRIGHT", row.iconBorder, "BOTTOMRIGHT", -2, 2)
-    row.countText:SetTextColor(1, 1, 1) -- Белый цвет
+    row.countText:SetTextColor(1, 1, 1) 
     
-    -- Добавляем обводку через флаги шрифта
     local font, size, flags = row.countText:GetFont()
-    row.countText:SetFont(font, size, "OUTLINE") -- Сохраняем оригинальные параметры + обводка
+    row.countText:SetFont(font, size, "OUTLINE") 
     
     return row
 end
 
--- Обратная совместимость - оставляем старые функции как алиасы
 QuestDetails.CreateRewardItemFrame = function(index)
     return QuestDetails.CreateItemFrame(index)
 end
 
 QuestDetails.SetupItemTooltip = function(row)
-    row:SetScript("OnEnter", function(self)
+    row:SetScript("OnEnter", function(self) 
         if not self.highlight then
             self.highlight = self:CreateTexture(nil, "BACKGROUND")
             self.highlight:SetAllPoints(self)
@@ -351,7 +328,7 @@ QuestDetails.SetupItemTooltip = function(row)
         end
     end)
 
-    row:SetScript("OnLeave", function(self)
+    row:SetScript("OnLeave", function(self) 
         if self.highlight then
             self.highlight:Hide()
         end
@@ -359,12 +336,10 @@ QuestDetails.SetupItemTooltip = function(row)
     end)
 end
 
--- Обратная совместимость - оставляем старые функции как алиасы
 QuestDetails.SetupRewardItemTooltip = QuestDetails.SetupItemTooltip
 
 QuestDetails.SetupRewardItems = function(q)
     if not q.rewards then 
-        -- Очищаем заголовок наград если нет наград
         if rewardsHeadingFS then
             rewardsHeadingFS:SetText("")
             rewardsHeadingFS:ClearAllPoints()
@@ -382,7 +357,6 @@ QuestDetails.SetupRewardItems = function(q)
                       (q.rewards.xp > 0)
     
     if not hasRewards then 
-        -- Очищаем заголовок наград если нет наград
         if rewardsHeadingFS then
             rewardsHeadingFS:SetText("")
             rewardsHeadingFS:ClearAllPoints()
@@ -462,18 +436,15 @@ QuestDetails.SetupExtraRewards = function(q)
 end
 
 QuestDetails.LayoutQuestDetails = function()
-    -- Сбрасываем отступ к начальному значению для каждого квеста
     local yOffset = 0
     if detailsTitle then
         yOffset = -detailsTitle:GetStringHeight() - 5
     end
     
-    -- Устанавливаем позицию заголовка (если еще не установлена)
     if detailsTitle and not detailsTitle:GetPoint() then
         detailsTitle:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, 0)
     end
     
-    -- Добавляем метаданные квеста сразу после заголовка
     if questMetaFS and questMetaFS:GetText() ~= "" then
         questMetaFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
         yOffset = yOffset - questMetaFS:GetStringHeight() - 8
@@ -484,7 +455,6 @@ QuestDetails.LayoutQuestDetails = function()
         yOffset = yOffset - objectivesSummaryFS:GetStringHeight() - 6
     end
     
-    -- Проверяем objectivesTextFS более строго - только если есть реальный текст
     local objectivesText = objectivesTextFS and objectivesTextFS:GetText()
     if objectivesText and objectivesText ~= "" and objectivesText:match("%S") then
         objectivesTextFS:SetPoint("TOPLEFT", rightContent, "TOPLEFT", 0, yOffset)
@@ -548,22 +518,18 @@ QuestDetails.ShowQuestDetails = function(questID)
     
     local q = MQSH_QuestDB[questID]
     
-    -- Проверяем состояние галочки "текущий персонаж"
-    local currentPlayerEnabled = true -- По умолчанию включено
+    local currentPlayerEnabled = true 
     if _G.MQSH_QuestOverlay and _G.MQSH_QuestOverlay.currentPlayerCheck then
         currentPlayerEnabled = _G.MQSH_QuestOverlay.currentPlayerCheck:GetChecked()
     end
     
-    -- Добавляем данные из истории персонажа только если галочка включена
     if currentPlayerEnabled then
         local charHistoryDB = MQSH_Char_HistoryDB or {}
         if charHistoryDB[questID] then
-            -- Создаем копию данных квеста
             local combinedData = {}
             for k, v in pairs(q) do
                 combinedData[k] = v
             end
-            -- Добавляем данные из истории персонажа
             if charHistoryDB[questID].timeCompleted then
                 combinedData.timeCompleted = charHistoryDB[questID].timeCompleted
             end
@@ -592,12 +558,10 @@ QuestDetails.ShowQuestDetails = function(questID)
 end
 
 QuestDetails.HighlightQuestButton = function(btn)
-    -- Убираем выделение с предыдущей кнопки
     if selectedButton then
         if selectedButton.selTexture then
             selectedButton.selTexture:Hide()
         end
-        -- Возвращаем нормальные цвета текста
         if selectedButton.normalTextColor then
             selectedButton.text:SetTextColor(selectedButton.normalTextColor.r, selectedButton.normalTextColor.g, selectedButton.normalTextColor.b)
         end
@@ -607,18 +571,15 @@ QuestDetails.HighlightQuestButton = function(btn)
     end
     
     selectedButton = btn
-    _G.selectedButton = selectedButton -- Обновляем глобальную переменную
+    _G.selectedButton = selectedButton 
     
-    -- Применяем выделение к новой кнопке
     if selectedButton then
         if selectedButton.selTexture then
             selectedButton.selTexture:Show()
-            -- Устанавливаем фон цвета сложности (цвет который был у текста изначально)
             if selectedButton.difficultyColor then
                 selectedButton.selTexture:SetVertexColor(selectedButton.difficultyColor.r, selectedButton.difficultyColor.g, selectedButton.difficultyColor.b, 0.3)
             end
         end
-        -- Делаем основной текст белым, метка типа остается своего цвета
         selectedButton.text:SetTextColor(1, 1, 1)
         if selectedButton.typeText and selectedButton.normalTypeColor then
             selectedButton.typeText:SetTextColor(selectedButton.normalTypeColor.r, selectedButton.normalTypeColor.g, selectedButton.normalTypeColor.b)
@@ -626,6 +587,5 @@ QuestDetails.HighlightQuestButton = function(btn)
     end
 end
 
--- Экспортируем переменную selectedButton в глобальную область
 _G.selectedButton = selectedButton
-_G.QuestDetails = QuestDetails 
+_G.QuestDetails = QuestDetails

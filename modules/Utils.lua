@@ -1,10 +1,8 @@
 local Utils = {}
 
--- Константы
-Utils.SCROLLBAR_WIDTH = 16    -- Ширина скроллбара
+Utils.SCROLLBAR_WIDTH = 16    
 
 
---- Обновляет скроллбар на основе содержимого ScrollFrame
 function Utils.UpdateScrollBar(scrollFrame, scrollbar)
     if not scrollFrame or not scrollbar then return end
     
@@ -21,14 +19,12 @@ function Utils.UpdateScrollBar(scrollFrame, scrollbar)
     end
 end
 
---- Обновляет все скроллбары в списке
 function Utils.UpdateAllScrollBars(scrollPairs)
     for _, pair in ipairs(scrollPairs) do
         Utils.UpdateScrollBar(pair.scrollFrame, pair.scrollbar)
     end
 end
 
---- Сбрасывает позицию скроллбаров
 function Utils.ResetScrollBars(scrollPairs)
     for _, pair in ipairs(scrollPairs) do
         if pair.scrollFrame then 
@@ -41,7 +37,6 @@ function Utils.ResetScrollBars(scrollPairs)
     end
 end
 
---- Создает скроллбар для ScrollFrame
 function Utils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacing, width, scrollStep)
     local scrollbar = CreateFrame("Slider", nil, parent, "UIPanelScrollBarTemplate")
     scrollbar:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", spacing, -14)
@@ -68,7 +63,6 @@ function Utils.CreateScrollBar(parent, scrollFrame, anchorFrame, spacing, width,
     return scrollbar
 end
 
---- Создает ScrollFrame с контентом
 function Utils.CreateScrollFrame(parent, paddingX, paddingY)
     local scrollFrame = CreateFrame("ScrollFrame", nil, parent)
     scrollFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", paddingX, -paddingY)
@@ -81,7 +75,6 @@ function Utils.CreateScrollFrame(parent, paddingX, paddingY)
     return scrollFrame, content
 end
 
--- Общие утилиты
 function Utils.SetBackdrop(frame, color, borderColor)
     frame:SetBackdrop({
         bgFile   = "Interface\\Buttons\\WHITE8x8",
@@ -95,7 +88,6 @@ function Utils.SetBackdrop(frame, color, borderColor)
     frame:SetBackdropBorderColor(unpack(borderColor))
 end
 
---- Создает FontString
 function Utils.CreateFS(parent, template, width)
     local fs = parent:CreateFontString(nil, "ARTWORK", template or "GameFontHighlight")
     fs:SetJustifyH("LEFT")
@@ -107,7 +99,6 @@ function Utils.CreateFS(parent, template, width)
     return fs
 end
 
---- Убирает контур шрифта
 function Utils.RemoveFontOutline(fs)
     if not fs or type(fs) ~= "table" or not fs.GetFont then
         return
@@ -128,4 +119,4 @@ function Utils.AddFontOutline(fs)
     end
 end
 
-_G.Utils = Utils 
+_G.Utils = Utils

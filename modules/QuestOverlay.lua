@@ -2,7 +2,6 @@ local uiCreated = false
 local QuestDetails = _G.QuestDetails
 local QuestList = _G.QuestList
 
--- Глобальная функция для обновления количества квестов
 local function UpdateQuestCountText()
     local count = 0
     
@@ -25,31 +24,25 @@ local function UpdateQuestCountText()
     end
 end
 
--- Делаем функцию доступной глобально
 _G.UpdateQuestCountText = UpdateQuestCountText
 
--- Настройки отступов
 local OVERLAY_PADDING_LEFT_RIGHT = 7
 local OVERLAY_PADDING_TOP = 45
 local OVERLAY_PADDING_BOTTOM = 35
 local WINDOW_SPACING = 4
 
--- Настройки окон
 local TITLE_TOP_OFFSET = 5
 
--- Отступы контента внутри окон
 local LEFT_WINDOW_PADDING_X = 6
 local LEFT_WINDOW_PADDING_Y = 3
 local RIGHT_WINDOW_PADDING_X = 5
 local RIGHT_WINDOW_PADDING_Y = 7
 
--- Настройки кнопок
 local BUTTON_HEIGHT = 16
 local BUTTON_TEXT_PADDING_X = 5
 local BUTTON_TEXT_PADDING_Y = 0
 local BUTTON_SPACING = 0
 
--- Переменные интерфейса
 local overlay
 local leftScrollFrame, leftContent
 local rightScrollFrame, rightContent, detailsFS, detailsTitle
@@ -66,7 +59,6 @@ local scrollPairs = {}
 
 local sortDropdown, orderBtn
 
--- Функция для создания выпадающего окна сортировки
 local function CreateSortDropdown(parent)
     local dropdown = CreateFrame("Frame", "MQSH_SortDropdown", parent, "UIDropDownMenuTemplate")
     
@@ -192,7 +184,6 @@ local function TryCreateQuestUI()
     closeBtn:SetScript("OnClick", function()
         overlay:Hide()
         Utils.ResetScrollBars(scrollPairs)
-        -- Сбрасываем параметры сортировки
         QuestList.SetSortParams(QuestList.GetSortType(), QuestList.GetSortOrder())
     end)
 
@@ -406,4 +397,4 @@ loader:SetScript("OnEvent", function(_, event, arg1)
     end
 end)
 
-_G.QuestOverlay_TryInit = TryCreateQuestUI 
+_G.QuestOverlay_TryInit = TryCreateQuestUI

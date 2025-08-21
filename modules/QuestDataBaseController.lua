@@ -5,8 +5,6 @@ end
 if not MQSH_Char_HistoryDB then
     MQSH_Char_HistoryDB = {}
 end
-
--- Utility Functions
 local function WithQuestLogSelection(index, func)
     local prev = GetQuestLogSelection()
     SelectQuestLogEntry(index)
@@ -21,7 +19,6 @@ local function CleanLocationString(str)
     return str:gsub("^%s*(.-)%s*$", "%1"):gsub("%s+", " ")
 end
 
--- Quest Data Extraction Functions
 local function GetQuestBasicInfo(questLogIndex)
     local title, level, questType, _, _, _, _, _, qID = GetQuestLogTitle(questLogIndex)
     local questID = qID and qID ~= 0 and qID or (GetQuestID and GetQuestID())
@@ -132,7 +129,6 @@ local function AssembleQuestData(basicInfo, questGroup, questType, locationName,
         npcName         = npcName,
         mainZone        = locationName,
         coordinates     = coordinates,
-        timeAccepted    = date("%d.%m.%y %H:%M:%S"),
         questGroup      = questGroup,
         questType       = questType,
     }
@@ -156,15 +152,16 @@ local function GetQuestIDAndData(questLogIndex, currentNPC)
     return questID, questData
 end
 
--- Database Save Functions
 local function SaveAcceptedQuestToDB(questLogIndex, currentNPC)
     local questID, questData = GetQuestIDAndData(questLogIndex, currentNPC)
     if questID and questData and not MQSH_QuestDB[questID] then
         MQSH_QuestDB[questID] = questData
+        MQSH_Char_HistoryDB[questID] = MQSH_Char_HistoryDB[questID] or {}
+        MQSH_Char_HistoryDB[questID].timeAccepted = date("%d.%m.%y %H:%M:%S")
+        MQSH_Char_HistoryDB[questID].questID = questID
     end
 end
 
--- History Functions
 local function GetInfoForHistory(currentNPC)
     local questID = GetQuestID and GetQuestID()
     local questData = questID and questID ~= 0 and MQSH_QuestDB[questID]
@@ -184,7 +181,6 @@ local function SaveQuestInfoToHistory(questID, currentNPC)
     MQSH_Char_HistoryDB[questID] = historyData
 end
 
--- Event Handling
 local function QuestDataBaseController_OnLoad()
     local currentNPC
     local questComplete = false
